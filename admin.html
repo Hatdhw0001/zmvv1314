@@ -9,793 +9,473 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --bg: #0f1117;
-            --surface: #1a1d27;
-            --border: #2a2d3a;
-            --accent: #3a8fd4;
-            --danger: #e74c3c;
-            --warning: #f39c12;
-            --success: #27ae60;
-            --gold: #f0c040;
-            --text: #e0e0e0;
-            --text2: #888;
+            --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+            --accent: #3a8fd4; --danger: #e74c3c; --warning: #f39c12;
+            --success: #27ae60; --gold: #f0c040; --text: #e0e0e0; --text2: #888;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
+            background: var(--bg); color: var(--text);
+            width: 100%; height: 100vh; overflow: hidden;
         }
-
         .login-screen {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: var(--bg);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999;
         }
         .login-screen.hidden { display: none; }
-
         .login-card {
-            background: var(--surface); border-radius: 16px;
-            padding: 40px 30px; width: 90%; max-width: 380px;
-            border: 1px solid var(--border); text-align: center;
+            background: var(--surface); border-radius: 16px; padding: 40px 30px;
+            width: 90%; max-width: 380px; border: 1px solid var(--border); text-align: center;
         }
         .login-card h2 { margin-bottom: 8px; font-size: 22px; }
-        .login-card p { color: var(--text2); margin-bottom: 24px; font-size: 13px; }
         .login-card input {
-            width: 100%; padding: 14px 16px;
-            background: var(--bg); border: 1px solid var(--border);
-            border-radius: 10px; color: white; font-size: 15px;
-            margin-bottom: 12px; outline: none;
+            width: 100%; padding: 14px; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: white; font-size: 15px; margin-bottom: 12px; outline: none;
         }
-        .login-card input:focus { border-color: var(--accent); }
         .login-card button {
-            width: 100%; padding: 14px;
-            background: var(--accent); border: none;
-            border-radius: 10px; color: white;
-            font-size: 16px; font-weight: 600; cursor: pointer;
+            width: 100%; padding: 14px; background: var(--accent);
+            border: none; border-radius: 10px; color: white; font-size: 16px; cursor: pointer;
         }
-        .login-error { color: var(--danger); font-size: 13px; margin-top: 8px; }
-
         .admin-container { display: flex; width: 100%; height: 100vh; }
-
         .sidebar {
-            width: 220px; background: var(--surface);
-            border-right: 1px solid var(--border);
+            width: 220px; background: var(--surface); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; flex-shrink: 0;
         }
-        .sidebar-header {
-            padding: 20px 16px; border-bottom: 1px solid var(--border);
-            font-size: 16px; font-weight: 700; text-align: center;
-        }
-        .sidebar-header i { color: var(--accent); margin-right: 6px; }
+        .sidebar-header { padding: 20px 16px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 700; text-align: center; }
         .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
         .nav-item {
-            padding: 12px 20px; cursor: pointer;
-            display: flex; align-items: center; gap: 10px;
-            font-size: 14px; color: var(--text2); transition: 0.2s;
-            border-left: 3px solid transparent;
+            padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            font-size: 14px; color: var(--text2); border-left: 3px solid transparent; transition: 0.2s;
         }
         .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
-        .nav-item.active {
-            background: rgba(58,143,212,0.1); color: var(--accent);
-            border-left-color: var(--accent);
-        }
-        .nav-item i { width: 20px; text-align: center; }
+        .nav-item.active { background: rgba(58,143,212,0.1); color: var(--accent); border-left-color: var(--accent); }
         .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
-        .logout-btn {
-            width: 100%; padding: 10px;
-            background: var(--danger); border: none; border-radius: 8px;
-            color: white; font-size: 13px; cursor: pointer;
-        }
-
+        .logout-btn { width: 100%; padding: 10px; background: var(--danger); border: none; border-radius: 8px; color: white; cursor: pointer; }
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .content-header {
-            padding: 16px 24px; background: var(--surface);
-            border-bottom: 1px solid var(--border); font-size: 18px;
-            font-weight: 600; display: flex; justify-content: space-between;
-            align-items: center; flex-shrink: 0;
+            padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+            font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;
         }
         .content-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
 
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px; margin-bottom: 24px;
-        }
-        .stat-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 20px; text-align: center;
-        }
-        .stat-card .stat-value { font-size: 32px; font-weight: 700; margin: 8px 0; }
-        .stat-card .stat-label { font-size: 13px; color: var(--text2); }
-        .stat-card.online .stat-value { color: var(--success); }
-        .stat-card.messages .stat-value { color: var(--accent); }
-        .stat-card.muted .stat-value { color: var(--danger); }
-        .stat-card.users .stat-value { color: var(--warning); }
-        .stat-card.lottery .stat-value { color: var(--gold); }
-
-        .table-container {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; overflow: hidden; margin-bottom: 16px;
-        }
-        .table-header {
-            padding: 14px 18px; border-bottom: 1px solid var(--border);
-            font-weight: 600; font-size: 14px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+        .table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+        .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th {
-            background: var(--bg); padding: 12px 14px; text-align: left;
-            font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--border);
-            font-size: 12px; text-transform: uppercase;
-        }
-        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-        .badge {
-            display: inline-block; padding: 4px 10px;
-            border-radius: 12px; font-size: 11px; font-weight: 600;
-        }
+        th { background: var(--bg); padding: 10px 12px; text-align: left; color: var(--text2); font-size: 11px; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
         .badge-success { background: rgba(39,174,96,0.2); color: var(--success); }
         .badge-danger { background: rgba(231,76,60,0.2); color: var(--danger); }
         .badge-warning { background: rgba(243,156,18,0.2); color: var(--warning); }
-        .badge-info { background: rgba(58,143,212,0.2); color: var(--accent); }
         .badge-gold { background: rgba(240,192,64,0.2); color: var(--gold); }
-
         .action-btn {
-            padding: 6px 12px; border: 1px solid var(--border);
-            border-radius: 6px; background: transparent; color: var(--text);
-            cursor: pointer; font-size: 12px; margin: 0 3px; transition: 0.2s;
+            padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
+            background: transparent; color: var(--text); cursor: pointer; font-size: 11px; margin: 1px;
         }
-        .action-btn:hover { background: var(--border); }
-        .action-btn.danger { color: var(--danger); border-color: var(--danger); }
-        .action-btn.warning { color: var(--warning); border-color: var(--warning); }
-        .action-btn.success { color: var(--success); border-color: var(--success); }
         .action-btn.gold { color: var(--gold); border-color: var(--gold); }
-
-        .search-box {
-            padding: 10px 16px; background: var(--bg);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: white; font-size: 13px; outline: none; width: 250px;
-        }
-        .search-box:focus { border-color: var(--accent); }
-
-        .form-group { margin-bottom: 16px; }
-        .form-group label {
-            display: block; font-weight: 600; margin-bottom: 6px;
-            font-size: 13px; color: var(--text2);
-        }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 12px 14px;
-            background: var(--bg); border: 1px solid var(--border);
-            border-radius: 8px; color: white; font-size: 14px;
-            outline: none; font-family: inherit;
-        }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            border-color: var(--accent);
-        }
-        .toggle-switch {
-            position: relative; display: inline-block;
-            width: 48px; height: 26px;
-        }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider {
-            position: absolute; cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--border); border-radius: 26px; transition: 0.3s;
-        }
-        .toggle-slider:before {
-            content: ""; position: absolute;
-            height: 20px; width: 20px; left: 3px; bottom: 3px;
-            background: white; border-radius: 50%; transition: 0.3s;
-        }
-        input:checked + .toggle-slider { background: var(--success); }
-        input:checked + .toggle-slider:before { transform: translateX(22px); }
-
+        .action-btn.danger { color: var(--danger); border-color: var(--danger); }
+        .action-btn.success { color: var(--success); border-color: var(--success); }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 12px; color: var(--text2); }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 13px; outline: none; }
+        .form-group input:focus { border-color: var(--accent); }
         .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .prize-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .prize-row input { flex: 1; }
         .lottery-card {
-            background: linear-gradient(135deg, #1a1d27, #2a2010);
-            border: 1px solid var(--gold); border-radius: 16px;
-            padding: 24px; margin-bottom: 16px;
-            position: relative; overflow: hidden;
+            background: var(--surface); border: 1px solid var(--gold); border-radius: 12px;
+            padding: 20px; margin-bottom: 12px;
         }
-        .lottery-card::before {
-            content: "🎰";
-            position: absolute;
-            top: -20px; right: -20px;
-            font-size: 80px; opacity: 0.1;
-        }
-        .lottery-card h3 { color: var(--gold); font-size: 18px; margin-bottom: 8px; }
-        .lottery-card .prize { font-size: 24px; font-weight: 700; color: var(--gold); }
-        .lottery-card .deadline { color: var(--text2); font-size: 12px; }
-
-        .winner-list {
-            display: flex; flex-wrap: wrap; gap: 8px;
-            margin-top: 12px;
-        }
-        .winner-tag {
-            padding: 6px 14px; background: rgba(240,192,64,0.2);
-            border: 1px solid var(--gold); border-radius: 20px;
-            font-size: 13px; color: var(--gold);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .winner-tag i { color: var(--gold); }
-
-        .empty-state {
-            text-align: center; padding: 60px 20px; color: var(--text2);
-        }
-        .empty-state i { font-size: 48px; margin-bottom: 16px; display: block; }
-
+        .lottery-card h3 { color: var(--gold); }
         @media (max-width: 768px) {
-            .sidebar { width: 60px; }
-            .sidebar .nav-item span { display: none; }
-            .sidebar-header span { display: none; }
-            .sidebar-header { text-align: center; padding: 16px 8px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .search-box { width: 150px; }
-            table { font-size: 11px; }
-            th, td { padding: 8px 6px; }
+            .sidebar { width: 50px; }
+            .sidebar .nav-item span, .sidebar-header span { display: none; }
             .grid-2, .grid-3 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <div class="login-screen" id="loginScreen">
-        <div class="login-card">
-            <h2>🛡️ 后台管理</h2>
-            <p>TxChat 管理系统</p>
-            <input type="password" id="adminPassword" placeholder="请输入管理密码" autocomplete="off">
-            <button onclick="handleAdminLogin()">登 录</button>
-            <div class="login-error" id="loginError"></div>
-            <p style="margin-top:16px;font-size:11px;color:var(--text2);">默认密码: admin123</p>
-        </div>
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <h2>🛡️ 后台管理</h2>
+        <input type="password" id="adminPassword" placeholder="管理密码" autocomplete="off">
+        <button onclick="handleAdminLogin()">登 录</button>
+        <p style="margin-top:12px;font-size:11px;color:var(--text2);">默认密码: admin123</p>
     </div>
+</div>
 
-    <div class="admin-container" id="adminPanel" style="display:none;">
-        <div class="sidebar">
-            <div class="sidebar-header"><i class="fas fa-shield-alt"></i> <span>TxChat 管理</span></div>
-            <div class="sidebar-nav">
-                <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard', this)">
-                    <i class="fas fa-th-large"></i> <span>仪表盘</span>
-                </div>
-                <div class="nav-item" data-page="users" onclick="switchPage('users', this)">
-                    <i class="fas fa-users"></i> <span>用户管理</span>
-                </div>
-                <div class="nav-item" data-page="messages" onclick="switchPage('messages', this)">
-                    <i class="fas fa-comments"></i> <span>消息管理</span>
-                </div>
-                <div class="nav-item" data-page="mutes" onclick="switchPage('mutes', this)">
-                    <i class="fas fa-ban"></i> <span>禁言管理</span>
-                </div>
-                <div class="nav-item" data-page="robot" onclick="switchPage('robot', this)">
-                    <i class="fas fa-robot"></i> <span>机器人管理</span>
-                </div>
-                <div class="nav-item" data-page="lottery" onclick="switchPage('lottery', this)">
-                    <i class="fas fa-gift"></i> <span>抽奖管理</span>
-                </div>
-                <div class="nav-item" data-page="settings" onclick="switchPage('settings', this)">
-                    <i class="fas fa-cog"></i> <span>系统设置</span>
-                </div>
-            </div>
-            <div class="sidebar-footer">
-                <button class="logout-btn" onclick="handleLogout()">退出登录</button>
-            </div>
+<div class="admin-container" id="adminPanel" style="display:none;">
+    <div class="sidebar">
+        <div class="sidebar-header"><span>TxChat 管理</span></div>
+        <div class="sidebar-nav">
+            <div class="nav-item active" onclick="switchPage('dashboard',this)"><i class="fas fa-th-large"></i><span>仪表盘</span></div>
+            <div class="nav-item" onclick="switchPage('users',this)"><i class="fas fa-users"></i><span>用户管理</span></div>
+            <div class="nav-item" onclick="switchPage('messages',this)"><i class="fas fa-comments"></i><span>消息管理</span></div>
+            <div class="nav-item" onclick="switchPage('mutes',this)"><i class="fas fa-ban"></i><span>禁言管理</span></div>
+            <div class="nav-item" onclick="switchPage('robot',this)"><i class="fas fa-robot"></i><span>机器人</span></div>
+            <div class="nav-item" onclick="switchPage('lottery',this)"><i class="fas fa-gift"></i><span>抽奖管理</span></div>
+            <div class="nav-item" onclick="switchPage('settings',this)"><i class="fas fa-cog"></i><span>系统设置</span></div>
         </div>
-
-        <div class="content">
-            <div class="content-header">
-                <span id="pageTitle">📊 仪表盘</span>
-                <span style="font-size:13px;color:var(--text2);" id="currentTime"></span>
-            </div>
-            <div class="content-body" id="contentBody"></div>
-        </div>
+        <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()">退出</button></div>
     </div>
+    <div class="content">
+        <div class="content-header"><span id="pageTitle">📊 仪表盘</span></div>
+        <div class="content-body" id="contentBody"></div>
+    </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
-            authDomain: "zmvv2011.firebaseapp.com",
-            databaseURL: "https://zmvv2011-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "zmvv2011",
-            storageBucket: "zmvv2011.firebasestorage.app",
-            messagingSenderId: "793178735751",
-            appId: "1:793178735751:web:626cca2b17d34681cce422",
-            measurementId: "G-1ENE8S87JN"
-        };
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
+    authDomain: "zmvv2011.firebaseapp.com",
+    databaseURL: "https://zmvv2011-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "zmvv2011",
+    storageBucket: "zmvv2011.firebasestorage.app",
+    messagingSenderId: "793178735751",
+    appId: "1:793178735751:web:626cca2b17d34681cce422"
+};
 
-        const ADMIN_PASSWORD = 'admin123';
-        let database, accountsRef, messagesRef, usersRef, mutesRef, warnsRef, robotConfigRef, lotteryRef;
-        let currentPage = 'dashboard';
+const ADMIN_PASSWORD = 'admin123';
+let database, accountsRef, messagesRef, usersRef, mutesRef, warnsRef, robotConfigRef, lotteryRef;
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            accountsRef = database.ref('accounts');
-            messagesRef = database.ref('messages');
-            usersRef = database.ref('users');
-            mutesRef = database.ref('mutes');
-            warnsRef = database.ref('warns');
-            robotConfigRef = database.ref('robot_config');
-            lotteryRef = database.ref('lottery');
-        } catch (e) {
-            console.error('Firebase 初始化失败', e);
-        }
+try {
+    firebase.initializeApp(firebaseConfig);
+    database = firebase.database();
+    accountsRef = database.ref('accounts');
+    messagesRef = database.ref('messages');
+    usersRef = database.ref('users');
+    mutesRef = database.ref('mutes');
+    warnsRef = database.ref('warns');
+    robotConfigRef = database.ref('robot_config');
+    lotteryRef = database.ref('lottery');
+} catch (e) { console.error(e); }
 
-        const defaultRobotConfig = {
-            name: 'TxChat小助手', avatar: '#27ae60', enabled: true,
-            welcomeEnabled: true, welcomeMessages: ['欢迎 {user} 加入TxChat！🌍', '嗨 {user}！欢迎 🎉', '{user} 来啦！👋'],
-            dailyWelcomeOnce: true, antiSpamEnabled: true, spamThreshold: 5, spamMuteMinutes: 30,
-            antiPornEnabled: true, pornMuteMinutes: 60,
-            antiAdEnabled: true, adWarnLimit: 3, adMuteMinutes: 60,
-            adWords: ['加微信','微信号','扫码','赚钱','兼职','代理','加盟','微商','加群','QQ群'],
-            pornWords: ['裸','骚','淫','色情','成人','激情','一夜情','约炮','小姐'],
-            blockUrls: true
-        };
-
-        async function getRobotConfig() {
-            const snapshot = await robotConfigRef.once('value');
-            return snapshot.val() || { ...defaultRobotConfig };
-        }
-
-        async function saveRobotConfig(config) { await robotConfigRef.set(config); }
-
-        setInterval(() => {
-            const now = new Date();
-            const el = document.getElementById('currentTime');
-            if (el) el.textContent = now.toLocaleDateString('zh-CN') + ' ' + now.toLocaleTimeString('zh-CN');
-        }, 1000);
-
-        function handleAdminLogin() {
-            if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('adminPanel').style.display = 'flex';
-                loadDashboard();
-            } else {
-                document.getElementById('loginError').textContent = '密码错误';
-            }
-        }
-
-        function handleLogout() {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('loginError').textContent = '';
-        }
-
-        document.getElementById('adminPassword').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') handleAdminLogin();
-        });
-
-        function switchPage(page, el) {
-            currentPage = page;
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            if (el) el.classList.add('active');
-            const titles = {
-                dashboard: '📊 仪表盘', users: '👥 用户管理', messages: '💬 消息管理',
-                mutes: '🚫 禁言管理', robot: '🤖 机器人管理', lottery: '🎰 抽奖管理', settings: '⚙️ 系统设置'
-            };
-            document.getElementById('pageTitle').textContent = titles[page] || '';
-            switch (page) {
-                case 'dashboard': loadDashboard(); break;
-                case 'users': loadUsers(); break;
-                case 'messages': loadMessages(); break;
-                case 'mutes': loadMutes(); break;
-                case 'robot': loadRobotPage(); break;
-                case 'lottery': loadLotteryPage(); break;
-                case 'settings': loadSettings(); break;
-            }
-        }
-
-        // ==================== 仪表盘 ====================
-        function loadDashboard() {
-            Promise.all([accountsRef.once('value'), messagesRef.once('value'), usersRef.once('value'), mutesRef.once('value'), lotteryRef.once('value')])
-                .then(([accounts, messages, users, mutes, lottery]) => {
-                    const totalUsers = Object.keys(accounts.val() || {}).length;
-                    const totalMessages = Object.keys(messages.val() || {}).length;
-                    const onlineUsers = Object.keys(users.val() || {}).length;
-                    const mutedUsers = Object.keys(mutes.val() || {}).length;
-                    const activeLotteries = Object.values(lottery.val() || {}).filter(l => l.status === 'active').length;
-
-                    document.getElementById('contentBody').innerHTML = `
-                        <div class="stats-grid">
-                            <div class="stat-card users"><div class="stat-label">注册用户</div><div class="stat-value">${totalUsers}</div></div>
-                            <div class="stat-card online"><div class="stat-label">在线用户</div><div class="stat-value">${onlineUsers}</div></div>
-                            <div class="stat-card messages"><div class="stat-label">总消息数</div><div class="stat-value">${totalMessages}</div></div>
-                            <div class="stat-card muted"><div class="stat-label">禁言用户</div><div class="stat-value">${mutedUsers}</div></div>
-                            <div class="stat-card lottery"><div class="stat-label">进行中抽奖</div><div class="stat-value">${activeLotteries}</div></div>
-                        </div>
-                        <div class="table-container"><div class="table-header">📋 最近消息</div><div id="recentMessages"></div></div>
-                    `;
-                    messagesRef.limitToLast(10).once('value').then(snapshot => {
-                        const msgs = snapshot.val() || {};
-                        const keys = Object.keys(msgs).reverse();
-                        let html = '<table><tr><th>用户</th><th>内容</th><th>时间</th></tr>';
-                        keys.forEach(key => {
-                            const m = msgs[key];
-                            if (m.type === 'system') return;
-                            html += `<tr><td>${m.userName || '?'}</td><td>${(m.text || '').substring(0, 50)}</td><td>${formatTime(m.timestamp)}</td></tr>`;
-                        });
-                        html += '</table>';
-                        document.getElementById('recentMessages').innerHTML = html;
-                    });
-                });
-        }
-
-        // ==================== 用户管理 ====================
-        function loadUsers() {
-            Promise.all([accountsRef.once('value'), usersRef.once('value'), mutesRef.once('value')])
-                .then(([accounts, online, mutes]) => {
-                    const allAccounts = accounts.val() || {};
-                    const onlineUsers = online.val() || {};
-                    const mutedUsers = mutes.val() || {};
-                    let html = '<input class="search-box" id="userSearch" placeholder="🔍 搜索用户..." oninput="filterUsers()" style="margin-bottom:12px;">';
-                    html += '<div class="table-container"><table><tr><th>用户名</th><th>状态</th><th>禁言</th><th>操作</th></tr>';
-                    Object.entries(allAccounts).forEach(([key, user]) => {
-                        const isOnline = !!onlineUsers[key];
-                        const isMuted = mutedUsers[key] && mutedUsers[key].until > Date.now();
-                        html += `<tr data-username="${user.username}">
-                            <td><strong>${user.username}</strong></td>
-                            <td>${isOnline ? '<span class="badge badge-success">在线</span>' : '<span class="badge badge-info">离线</span>'}</td>
-                            <td>${isMuted ? '<span class="badge badge-danger">禁言中</span>' : '<span class="badge badge-success">正常</span>'}</td>
-                            <td>
-                                ${isMuted ? `<button class="action-btn success" onclick="unmuteUser('${key}')">解除</button>` : `<button class="action-btn warning" onclick="showMuteDialog('${key}','${user.username}')">禁言</button>`}
-                                <button class="action-btn danger" onclick="deleteUser('${key}')">删除</button>
-                            </td></tr>`;
-                    });
-                    html += '</table></div>';
-                    document.getElementById('contentBody').innerHTML = html;
-                });
-        }
-        function filterUsers() {
-            const s = document.getElementById('userSearch')?.value?.toLowerCase() || '';
-            document.querySelectorAll('tr[data-username]').forEach(r => r.style.display = r.dataset.username.toLowerCase().includes(s) ? '' : 'none');
-        }
-        function showMuteDialog(uid, name) {
-            const m = prompt(`对 ${name} 禁言多少分钟？`, '30');
-            if (m && !isNaN(m) && m > 0) {
-                mutesRef.child(uid).set({ until: Date.now() + m * 60000, reason: '管理员禁言', mutedAt: firebase.database.ServerValue.TIMESTAMP });
-                alert(`${name} 已被禁言 ${m} 分钟`); loadUsers();
-            }
-        }
-        function unmuteUser(uid) { if (confirm('确定解除禁言？')) { mutesRef.child(uid).remove(); alert('已解除'); loadUsers(); } }
-        function deleteUser(uid) {
-            if (confirm('确定删除此用户？')) {
-                accountsRef.child(uid).remove(); usersRef.child(uid).remove();
-                mutesRef.child(uid).remove(); warnsRef.child(uid).remove();
-                alert('已删除'); loadUsers();
-            }
-        }
-
-        // ==================== 消息管理 ====================
-        function loadMessages() {
-            messagesRef.limitToLast(50).once('value').then(snapshot => {
-                const msgs = snapshot.val() || {};
-                let html = '<div class="table-container"><table><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr>';
-                Object.keys(msgs).reverse().forEach(key => {
-                    const m = msgs[key];
-                    html += `<tr><td>${m.userName||'?'}</td><td>${(m.text||'').substring(0,40)}</td><td>${formatTime(m.timestamp)}</td><td><button class="action-btn danger" onclick="deleteMsg('${key}')">删除</button></td></tr>`;
-                });
-                html += '</table></div>';
-                document.getElementById('contentBody').innerHTML = html;
-            });
-        }
-        function deleteMsg(key) { if (confirm('删除此消息？')) { messagesRef.child(key).remove(); alert('已删除'); loadMessages(); } }
-
-        // ==================== 禁言管理 ====================
-        function loadMutes() {
-            mutesRef.once('value').then(snapshot => {
-                const mutes = snapshot.val() || {};
-                let html = '<div class="table-container"><table><tr><th>用户</th><th>到期</th><th>原因</th><th>操作</th></tr>';
-                Object.entries(mutes).forEach(([k, m]) => {
-                    html += `<tr><td>${k}</td><td>${new Date(m.until).toLocaleString('zh-CN')}</td><td>${m.reason||'无'}</td>
-                        <td><button class="action-btn success" onclick="unmuteUser('${k}')">解除</button></td></tr>`;
-                });
-                html += '</table></div>';
-                document.getElementById('contentBody').innerHTML = html || '<div class="empty-state"><i class="fas fa-check-circle"></i>暂无禁言</div>';
-            });
-        }
-
-        // ==================== 机器人管理 ====================
-        async function loadRobotPage() {
-            const config = await getRobotConfig();
-            document.getElementById('contentBody').innerHTML = `
-                <div class="table-container"><div class="table-header">🤖 基本设置</div>
-                    <div style="padding:20px;">
-                        <div class="grid-2">
-                            <div class="form-group"><label>名称</label><input type="text" id="robotName" value="${config.name||'TxChat小助手'}"></div>
-                            <div class="form-group"><label>头像颜色</label><input type="color" id="robotAvatar" value="${config.avatar||'#27ae60'}" style="height:42px;"></div>
-                        </div>
-                        <div class="form-group"><label style="display:flex;align-items:center;gap:10px;">启用 <label class="toggle-switch"><input type="checkbox" id="robotEnabled" ${config.enabled!==false?'checked':''}><span class="toggle-slider"></span></label></label></div>
-                    </div>
-                </div>
-                <div class="table-container" style="margin-top:16px;"><div class="table-header">👋 欢迎</div>
-                    <div style="padding:20px;">
-                        <div class="form-group"><label style="display:flex;align-items:center;gap:10px;">启用欢迎 <label class="toggle-switch"><input type="checkbox" id="welcomeEnabled" ${config.welcomeEnabled!==false?'checked':''}><span class="toggle-slider"></span></label></label></div>
-                        <div class="form-group"><label>欢迎语（每行一条，{user}=用户名）</label><textarea id="welcomeMessages">${(config.welcomeMessages||defaultRobotConfig.welcomeMessages).join('\n')}</textarea></div>
-                    </div>
-                </div>
-                <div class="table-container" style="margin-top:16px;"><div class="table-header">🛡️ 防刷屏</div>
-                    <div style="padding:20px;">
-                        <div class="form-group"><label style="display:flex;align-items:center;gap:10px;">启用 <label class="toggle-switch"><input type="checkbox" id="antiSpamEnabled" ${config.antiSpamEnabled!==false?'checked':''}><span class="toggle-slider"></span></label></label></div>
-                        <div class="grid-2"><div class="form-group"><label>阈值(条/3秒)</label><input type="number" id="spamThreshold" value="${config.spamThreshold||5}"></div><div class="form-group"><label>禁言(分钟)</label><input type="number" id="spamMuteMinutes" value="${config.spamMuteMinutes||30}"></div></div>
-                    </div>
-                </div>
-                <div class="table-container" style="margin-top:16px;"><div class="table-header">🔞 防色情</div>
-                    <div style="padding:20px;">
-                        <div class="form-group"><label style="display:flex;align-items:center;gap:10px;">启用 <label class="toggle-switch"><input type="checkbox" id="antiPornEnabled" ${config.antiPornEnabled!==false?'checked':''}><span class="toggle-slider"></span></label></label></div>
-                        <div class="form-group"><label>禁言(分钟)</label><input type="number" id="pornMuteMinutes" value="${config.pornMuteMinutes||60}"></div>
-                        <div class="form-group"><label>敏感词(逗号分隔)</label><textarea id="pornWords">${(config.pornWords||defaultRobotConfig.pornWords).join(',')}</textarea></div>
-                    </div>
-                </div>
-                <div class="table-container" style="margin-top:16px;"><div class="table-header">📢 防广告</div>
-                    <div style="padding:20px;">
-                        <div class="form-group"><label style="display:flex;align-items:center;gap:10px;">启用 <label class="toggle-switch"><input type="checkbox" id="antiAdEnabled" ${config.antiAdEnabled!==false?'checked':''}><span class="toggle-slider"></span></label></label></div>
-                        <div class="grid-2"><div class="form-group"><label>警告上限</label><input type="number" id="adWarnLimit" value="${config.adWarnLimit||3}"></div><div class="form-group"><label>禁言(分钟)</label><input type="number" id="adMuteMinutes" value="${config.adMuteMinutes||60}"></div></div>
-                        <div class="form-group"><label>广告词(逗号分隔)</label><textarea id="adWords">${(config.adWords||defaultRobotConfig.adWords).join(',')}</textarea></div>
-                    </div>
-                </div>
-                <div style="display:flex;gap:12px;margin-top:20px;">
-                    <button class="action-btn success" onclick="saveRobotConfigAll()" style="flex:1;padding:14px;">💾 保存设置</button>
-                    <button class="action-btn warning" onclick="resetRobotConfig()" style="flex:1;padding:14px;">🔄 恢复默认</button>
-                </div>`;
-        }
-
-        async function saveRobotConfigAll() {
-            const config = {
-                name: document.getElementById('robotName')?.value, avatar: document.getElementById('robotAvatar')?.value,
-                enabled: document.getElementById('robotEnabled')?.checked,
-                welcomeEnabled: document.getElementById('welcomeEnabled')?.checked,
-                welcomeMessages: (document.getElementById('welcomeMessages')?.value||'').split('\n').filter(m=>m.trim()),
-                antiSpamEnabled: document.getElementById('antiSpamEnabled')?.checked,
-                spamThreshold: parseInt(document.getElementById('spamThreshold')?.value)||5,
-                spamMuteMinutes: parseInt(document.getElementById('spamMuteMinutes')?.value)||30,
-                antiPornEnabled: document.getElementById('antiPornEnabled')?.checked,
-                pornMuteMinutes: parseInt(document.getElementById('pornMuteMinutes')?.value)||60,
-                pornWords: (document.getElementById('pornWords')?.value||'').split(',').map(w=>w.trim()).filter(w=>w),
-                antiAdEnabled: document.getElementById('antiAdEnabled')?.checked,
-                adWarnLimit: parseInt(document.getElementById('adWarnLimit')?.value)||3,
-                adMuteMinutes: parseInt(document.getElementById('adMuteMinutes')?.value)||60,
-                adWords: (document.getElementById('adWords')?.value||'').split(',').map(w=>w.trim()).filter(w=>w)
-            };
-            await saveRobotConfig(config); alert('✅ 已保存');
-        }
-        async function resetRobotConfig() {
-            if (confirm('恢复默认？')) { await saveRobotConfig(defaultRobotConfig); alert('✅ 已恢复'); loadRobotPage(); }
-        }
-
-        // ==================== 🎰 抽奖管理 ====================
-        async function loadLotteryPage() {
-            const snapshot = await lotteryRef.once('value');
-            const lotteries = snapshot.val() || {};
-            const config = await getRobotConfig();
-
-            let html = `
-                <div class="flex-between" style="margin-bottom:16px;">
-                    <h3>🎰 抽奖活动管理</h3>
-                    <button class="action-btn gold" onclick="showCreateLottery()" style="padding:10px 20px;font-size:14px;">
-                        <i class="fas fa-plus"></i> 创建抽奖
-                    </button>
-                </div>`;
-
-            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l.status === 'active');
-            const endedLotteries = Object.entries(lotteries).filter(([k, l]) => l.status !== 'active');
-
-            if (activeLotteries.length > 0) {
-                html += '<h4 style="color:var(--gold);margin-bottom:12px;">🟢 进行中的抽奖</h4>';
-                activeLotteries.forEach(([key, lottery]) => {
-                    html += renderLotteryCard(key, lottery, true);
-                });
-            }
-
-            if (endedLotteries.length > 0) {
-                html += '<h4 style="color:var(--text2);margin:16px 0 12px;">🔴 已结束的抽奖</h4>';
-                endedLotteries.forEach(([key, lottery]) => {
-                    html += renderLotteryCard(key, lottery, false);
-                });
-            }
-
-            if (Object.keys(lotteries).length === 0) {
-                html += '<div class="empty-state"><i class="fas fa-gift"></i>暂无抽奖活动<br><button class="action-btn gold" onclick="showCreateLottery()" style="margin-top:12px;">创建第一个抽奖</button></div>';
-            }
-
-            document.getElementById('contentBody').innerHTML = html;
-        }
-
-        function renderLotteryCard(key, lottery, isActive) {
-            const participants = lottery.participants || {};
-            const participantCount = Object.keys(participants).length;
-            const winners = lottery.winners || [];
-            const endTime = new Date(lottery.endTime);
-            const now = Date.now();
-            const timeLeft = endTime - now;
-            
-            let timeStr = '';
-            if (timeLeft <= 0) {
-                timeStr = '已结束';
-            } else {
-                const hours = Math.floor(timeLeft / 3600000);
-                const mins = Math.floor((timeLeft % 3600000) / 60000);
-                timeStr = `剩余 ${hours}小时${mins}分钟`;
-            }
-
-            return `
-                <div class="lottery-card">
-                    <h3>🎁 ${lottery.title}</h3>
-                    <div class="prize">🏆 ${lottery.prize}</div>
-                    <div class="deadline">⏰ ${timeStr} | 👥 ${participantCount}人参与 | 🎯 抽取${lottery.winnerCount}人</div>
-                    ${winners.length > 0 ? `
-                        <div class="winner-list">
-                            🎉 中奖者：
-                            ${winners.map(w => `<span class="winner-tag"><i class="fas fa-crown"></i> ${w.name}</span>`).join('')}
-                        </div>` : ''}
-                    <div style="margin-top:12px;display:flex;gap:8px;">
-                        ${isActive ? `
-                            <button class="action-btn gold" onclick="drawLottery('${key}')">🎯 开奖</button>
-                            <button class="action-btn warning" onclick="sendLotteryAnnounce('${key}')">📢 广播</button>
-                            <button class="action-btn danger" onclick="cancelLottery('${key}')">取消</button>
-                        ` : `
-                            <button class="action-btn danger" onclick="deleteLottery('${key}')">删除</button>
-                        `}
-                    </div>
-                </div>`;
-        }
-
-        function showCreateLottery() {
-            const title = prompt('抽奖标题：', '🎉 幸运大抽奖');
-            if (!title) return;
-            const prize = prompt('奖品名称：', 'VIP会员一个月');
-            if (!prize) return;
-            const winnerCount = parseInt(prompt('中奖人数：', '1'));
-            if (!winnerCount || winnerCount < 1) return;
-            const hours = parseInt(prompt('抽奖持续时间（小时）：', '24'));
-            if (!hours || hours < 1) return;
-
-            const lotteryData = {
-                title, prize, winnerCount,
-                startTime: Date.now(),
-                endTime: Date.now() + hours * 3600000,
-                status: 'active',
-                participants: {},
-                winners: [],
-                createdBy: 'admin'
-            };
-
-            const newRef = lotteryRef.push();
-            newRef.set(lotteryData).then(() => {
-                // 机器人广播抽奖消息
-                messagesRef.push({
-                    userId: 'bot_txchat',
-                    userName: 'TxChat小助手',
-                    userAvatar: '#27ae60',
-                    text: `🎰 抽奖活动开始！\n🎁 奖品：${prize}\n👥 参与方式：在聊天室发送"#参与抽奖"\n⏰ 结束时间：${new Date(lotteryData.endTime).toLocaleString('zh-CN')}\n🎯 将抽取 ${winnerCount} 位幸运用户！`,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: 'bot'
-                });
-                alert('✅ 抽奖已创建并广播到聊天室！');
-                loadLotteryPage();
-            });
-        }
-
-        async function drawLottery(lotteryKey) {
-            const snapshot = await lotteryRef.child(lotteryKey).once('value');
-            const lottery = snapshot.val();
-            if (!lottery) return;
-
-            const participants = Object.values(lottery.participants || {});
-            if (participants.length === 0) {
-                alert('没有参与者，无法开奖');
-                return;
-            }
-
-            const winnerCount = Math.min(lottery.winnerCount, participants.length);
-            const winners = [];
-            const shuffled = [...participants].sort(() => Math.random() - 0.5);
-            
-            for (let i = 0; i < winnerCount; i++) {
-                winners.push(shuffled[i]);
-            }
-
-            await lotteryRef.child(lotteryKey).update({
-                status: 'ended',
-                winners: winners,
-                drawTime: Date.now()
-            });
-
-            // 机器人公布结果
-            const winnerNames = winners.map(w => w.name).join('、');
-            messagesRef.push({
-                userId: 'bot_txchat',
-                userName: 'TxChat小助手',
-                userAvatar: '#27ae60',
-                text: `🎉 抽奖结果公布！\n🎁 奖品：${lottery.prize}\n🏆 中奖用户：${winnerNames}\n🎊 恭喜以上 ${winnerCount} 位幸运用户！`,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                type: 'bot'
-            });
-
-            alert(`🎉 开奖完成！\n中奖者：${winnerNames}`);
-            loadLotteryPage();
-        }
-
-        function sendLotteryAnnounce(lotteryKey) {
-            lotteryRef.child(lotteryKey).once('value').then(snapshot => {
-                const lottery = snapshot.val();
-                if (!lottery) return;
-                messagesRef.push({
-                    userId: 'bot_txchat',
-                    userName: 'TxChat小助手',
-                    userAvatar: '#27ae60',
-                    text: `📢 抽奖提醒！\n🎁 奖品：${lottery.prize}\n👥 参与方式：在聊天室发送"#参与抽奖"\n⏰ 即将结束，快来参与！`,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: 'bot'
-                });
-                alert('✅ 已广播抽奖提醒');
-            });
-        }
-
-        function cancelLottery(lotteryKey) {
-            if (confirm('确定取消此抽奖？')) {
-                lotteryRef.child(lotteryKey).update({ status: 'cancelled' });
-                messagesRef.push({
-                    userId: 'bot_txchat',
-                    userName: 'TxChat小助手',
-                    userAvatar: '#27ae60',
-                    text: '⚠️ 抽奖活动已取消',
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: 'warning'
-                });
-                alert('已取消');
-                loadLotteryPage();
-            }
-        }
-
-        function deleteLottery(lotteryKey) {
-            if (confirm('确定删除此抽奖记录？')) {
-                lotteryRef.child(lotteryKey).remove();
-                alert('已删除');
-                loadLotteryPage();
-            }
-        }
-
-        // ==================== 系统设置 ====================
-        function loadSettings() {
-            document.getElementById('contentBody').innerHTML = `
-                <div class="table-container" style="max-width:600px;">
-                    <div class="table-header">⚙️ 系统设置</div>
-                    <div style="padding:20px;">
-                        <div style="margin-bottom:20px;"><label style="display:block;margin-bottom:8px;font-weight:600;">修改密码</label><input class="search-box" type="password" id="newPassword" placeholder="新密码" style="width:100%;margin-bottom:8px;"><button class="action-btn success" onclick="changePassword()">修改密码</button></div>
-                        <hr style="border-color:var(--border);margin:20px 0;">
-                        <div style="margin-bottom:20px;"><label style="display:block;margin-bottom:8px;font-weight:600;">清空消息</label><button class="action-btn danger" onclick="clearAllMessages()">清空消息</button></div>
-                        <hr style="border-color:var(--border);margin:20px 0;">
-                        <div><label style="display:block;margin-bottom:8px;font-weight:600;">清空用户</label><button class="action-btn danger" onclick="clearAllUsers()">清空用户</button></div>
-                    </div>
-                </div>`;
-        }
-
-        function changePassword() {
-            const pw = document.getElementById('newPassword')?.value;
-            if (pw && pw.length >= 6) { alert('密码已修改: ' + pw); document.getElementById('newPassword').value = ''; }
-            else { alert('密码至少6位'); }
-        }
-        function clearAllMessages() { if (confirm('清空所有消息？') && confirm('再次确认')) { messagesRef.remove(); alert('已清空'); loadDashboard(); } }
-        function clearAllUsers() { if (confirm('清空所有用户？') && confirm('再次确认')) { accountsRef.remove(); usersRef.remove(); alert('已清空'); loadDashboard(); } }
-
-        function formatTime(ts) {
-            if (!ts) return '';
-            const d = new Date(ts);
-            return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + ' ' + (d.getMonth()+1) + '/' + d.getDate();
-        }
-
+function handleAdminLogin() {
+    if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('adminPanel').style.display = 'flex';
         loadDashboard();
-    </script>
+    }
+}
+function handleLogout() {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('adminPassword').value = '';
+}
+document.getElementById('adminPassword').addEventListener('keydown', e => { if(e.key==='Enter') handleAdminLogin(); });
+
+function switchPage(page, el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const titles = { dashboard:'📊 仪表盘', users:'👥 用户管理', messages:'💬 消息管理', mutes:'🚫 禁言管理', robot:'🤖 机器人管理', lottery:'🎰 抽奖管理', settings:'⚙️ 系统设置' };
+    document.getElementById('pageTitle').textContent = titles[page]||'';
+    switch(page) {
+        case 'dashboard': loadDashboard(); break;
+        case 'users': loadUsers(); break;
+        case 'messages': loadMessages(); break;
+        case 'mutes': loadMutes(); break;
+        case 'robot': loadRobotPage(); break;
+        case 'lottery': loadLotteryPage(); break;
+        case 'settings': loadSettings(); break;
+    }
+}
+
+// ==================== 仪表盘 ====================
+function loadDashboard() {
+    Promise.all([accountsRef.once('value'), messagesRef.once('value'), usersRef.once('value'), mutesRef.once('value'), lotteryRef.once('value')])
+    .then(([a,m,u,mu,l]) => {
+        const tu = Object.keys(a.val()||{}).length, tm = Object.keys(m.val()||{}).length;
+        const ou = Object.keys(u.val()||{}).length, mu2 = Object.keys(mu.val()||{}).length;
+        const al = Object.values(l.val()||{}).filter(x=>x.status==='active').length;
+        document.getElementById('contentBody').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value">${tu}</div><div class="stat-label">注册用户</div></div>
+                <div class="stat-card"><div class="stat-value">${ou}</div><div class="stat-label">在线用户</div></div>
+                <div class="stat-card"><div class="stat-value">${tm}</div><div class="stat-label">总消息</div></div>
+                <div class="stat-card"><div class="stat-value">${mu2}</div><div class="stat-label">禁言中</div></div>
+                <div class="stat-card"><div class="stat-value" style="color:var(--gold)">${al}</div><div class="stat-label">进行中抽奖</div></div>
+            </div>`;
+    });
+}
+
+// ==================== 用户/消息/禁言（简化） ====================
+function loadUsers() {
+    Promise.all([accountsRef.once('value'), mutesRef.once('value')]).then(([a,mu]) => {
+        const ac = a.val()||{}, mt = mu.val()||{};
+        let h = '<div class="table-container"><table><tr><th>用户名</th><th>禁言</th><th>操作</th></tr>';
+        Object.entries(ac).forEach(([k,v]) => {
+            const muted = mt[k] && mt[k].until > Date.now();
+            h += `<tr><td>${v.username}</td><td>${muted?'<span class="badge badge-danger">是</span>':'<span class="badge badge-success">否</span>'}</td>
+            <td>${muted?`<button class="action-btn success" onclick="unmute('${k}')">解除</button>`:`<button class="action-btn warning" onclick="muteUser('${k}')">禁言</button>`}
+            <button class="action-btn danger" onclick="deleteUser('${k}')">删除</button></td></tr>`;
+        });
+        h += '</table></div>';
+        document.getElementById('contentBody').innerHTML = h;
+    });
+}
+function muteUser(uid) { const m = prompt('禁言多少分钟？','30'); if(m&&m>0){ mutesRef.child(uid).set({until:Date.now()+m*60000,reason:'管理员禁言'}); alert('已禁言'); loadUsers(); } }
+function unmute(uid) { if(confirm('解除禁言？')){ mutesRef.child(uid).remove(); alert('已解除'); loadUsers(); } }
+function deleteUser(uid) { if(confirm('删除用户？')){ accountsRef.child(uid).remove(); usersRef.child(uid).remove(); mutesRef.child(uid).remove(); alert('已删除'); loadUsers(); } }
+
+function loadMessages() {
+    messagesRef.limitToLast(50).once('value').then(s => {
+        const ms = s.val()||{};
+        let h = '<div class="table-container"><table><tr><th>用户</th><th>内容</th><th>操作</th></tr>';
+        Object.keys(ms).reverse().forEach(k => {
+            const m = ms[k];
+            h += `<tr><td>${m.userName||'?'}</td><td>${(m.text||'').substring(0,40)}</td><td><button class="action-btn danger" onclick="delMsg('${k}')">删除</button></td></tr>`;
+        });
+        h += '</table></div>';
+        document.getElementById('contentBody').innerHTML = h;
+    });
+}
+function delMsg(k) { if(confirm('删除消息？')){ messagesRef.child(k).remove(); loadMessages(); } }
+
+function loadMutes() {
+    mutesRef.once('value').then(s => {
+        const mt = s.val()||{};
+        let h = '<div class="table-container"><table><tr><th>用户</th><th>到期</th><th>操作</th></tr>';
+        Object.entries(mt).forEach(([k,v]) => {
+            h += `<tr><td>${k}</td><td>${new Date(v.until).toLocaleString('zh-CN')}</td><td><button class="action-btn success" onclick="unmute('${k}')">解除</button></td></tr>`;
+        });
+        h += '</table></div>';
+        document.getElementById('contentBody').innerHTML = h;
+    });
+}
+
+// ==================== 机器人管理（简化） ====================
+async function loadRobotPage() {
+    const c = (await robotConfigRef.once('value')).val() || { name:'TxChat小助手', avatar:'#27ae60', enabled:true };
+    document.getElementById('contentBody').innerHTML = `
+        <div class="table-container"><div class="table-header">🤖 基本设置</div>
+        <div style="padding:16px;">
+            <div class="grid-2"><div class="form-group"><label>名称</label><input id="rName" value="${c.name||''}"></div><div class="form-group"><label>颜色</label><input type="color" id="rAvatar" value="${c.avatar||'#27ae60'}" style="height:36px;"></div></div>
+            <button class="action-btn success" onclick="saveRobot()" style="padding:10px 20px;">💾 保存</button>
+        </div></div>`;
+}
+async function saveRobot() {
+    await robotConfigRef.set({ name: document.getElementById('rName').value, avatar: document.getElementById('rAvatar').value, enabled: true });
+    alert('✅ 已保存');
+}
+
+// ==================== 🎰 抽奖管理（新版） ====================
+async function loadLotteryPage() {
+    const s = await lotteryRef.once('value');
+    const lotteries = s.val() || {};
+    let html = `<div class="flex-between" style="margin-bottom:16px;"><h3>🎰 抽奖活动</h3><button class="action-btn gold" onclick="showCreateLottery()" style="padding:10px 16px;font-size:13px;">➕ 创建抽奖</button></div>`;
+
+    const active = Object.entries(lotteries).filter(([k,l])=>l.status==='active');
+    const ended = Object.entries(lotteries).filter(([k,l])=>l.status!=='active');
+
+    if (active.length > 0) {
+        html += '<h4 style="color:var(--gold);margin-bottom:8px;">🟢 进行中</h4>';
+        active.forEach(([k,l]) => html += renderLotteryCard(k,l,true));
+    }
+    if (ended.length > 0) {
+        html += '<h4 style="color:var(--text2);margin:16px 0 8px;">🔴 已结束</h4>';
+        ended.forEach(([k,l]) => html += renderLotteryCard(k,l,false));
+    }
+    if (Object.keys(lotteries).length === 0) html += '<div style="text-align:center;color:var(--text2);padding:40px;">暂无抽奖活动</div>';
+
+    document.getElementById('contentBody').innerHTML = html;
+}
+
+function renderLotteryCard(key, lottery, isActive) {
+    const p = lottery.participants || {};
+    const w = lottery.winners || [];
+    const prizes = lottery.prizes || [];
+    const count = Object.keys(p).length;
+    const endTime = new Date(lottery.endTime);
+    const now = Date.now();
+    const left = endTime - now;
+    const timeStr = left <= 0 ? '已到期' : `${Math.floor(left/3600000)}小时${Math.floor((left%3600000)/60000)}分钟`;
+
+    let prizeStr = prizes.map(pr => `${pr.name} x ${pr.count||1}`).join(', ');
+
+    return `
+    <div class="lottery-card">
+        <h3>🎁 ${lottery.title}</h3>
+        <p style="font-size:12px;color:var(--text2);">⏰ ${timeStr} | 👥 ${count}人 | 🎯 ${lottery.winnerCount||1}人中奖</p>
+        <p style="font-size:12px;color:var(--text2);">🏆 奖品: ${prizeStr}</p>
+        ${w.length > 0 ? `<p style="font-size:12px;color:var(--gold);">🎉 中奖: ${w.map(x=>x.name).join(', ')}</p>` : ''}
+        <div style="margin-top:10px;">
+            ${isActive ? `
+                <button class="action-btn gold" onclick="drawNow('${key}')">🎯 立即开奖</button>
+                <button class="action-btn" onclick="broadcastLottery('${key}')">📢 广播</button>
+                <button class="action-btn danger" onclick="cancelLottery('${key}')">取消</button>
+            ` : `<button class="action-btn danger" onclick="deleteLottery('${key}')">删除</button>`}
+        </div>
+    </div>`;
+}
+
+function showCreateLottery() {
+    const h = `
+        <div class="table-container" style="max-width:600px;">
+            <div class="table-header">➕ 创建抽奖</div>
+            <div style="padding:16px;">
+                <div class="form-group"><label>抽奖标题</label><input id="ltTitle" value="TX聊天室 发起了抽奖活动"></div>
+                <div class="grid-2">
+                    <div class="form-group"><label>中奖人数</label><input type="number" id="ltWinCount" value="1" min="1"></div>
+                    <div class="form-group"><label>持续时间(小时)</label><input type="number" id="ltHours" value="24" min="1"></div>
+                </div>
+                <div class="form-group"><label>奖品列表</label>
+                    <div id="prizeList">
+                        <div class="prize-row"><input placeholder="奖品名称" class="prize-name" value="18cny"><input placeholder="数量" type="number" class="prize-count" value="6" min="1" style="width:80px;"></div>
+                    </div>
+                    <button class="action-btn" onclick="addPrize()" style="margin-top:6px;">➕ 添加奖品</button>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px;">
+                    <button class="action-btn gold" onclick="createLottery()" style="flex:1;padding:12px;">🎰 创建并广播</button>
+                    <button class="action-btn" onclick="loadLotteryPage()" style="flex:1;padding:12px;">取消</button>
+                </div>
+            </div>
+        </div>`;
+    document.getElementById('contentBody').innerHTML = h;
+}
+
+function addPrize() {
+    const div = document.createElement('div');
+    div.className = 'prize-row';
+    div.innerHTML = `<input placeholder="奖品名称" class="prize-name"><input placeholder="数量" type="number" class="prize-count" value="1" min="1" style="width:80px;"><button class="action-btn danger" onclick="this.parentElement.remove()">✕</button>`;
+    document.getElementById('prizeList').appendChild(div);
+}
+
+async function createLottery() {
+    const title = document.getElementById('ltTitle').value || 'TX聊天室 发起了抽奖活动';
+    const winnerCount = parseInt(document.getElementById('ltWinCount').value) || 1;
+    const hours = parseInt(document.getElementById('ltHours').value) || 24;
+
+    const prizes = [];
+    document.querySelectorAll('.prize-row').forEach(row => {
+        const name = row.querySelector('.prize-name').value.trim();
+        const count = parseInt(row.querySelector('.prize-count').value) || 1;
+        if (name) prizes.push({ name, count });
+    });
+    if (prizes.length === 0) prizes.push({ name: '奖品', count: 1 });
+
+    const now = Date.now();
+    const lotteryData = {
+        title, type: '群抽奖', winnerCount, prizes,
+        startTime: now,
+        endTime: now + hours * 3600000,
+        createdAt: now,
+        status: 'active',
+        participants: {},
+        winners: []
+    };
+
+    const ref = await lotteryRef.push();
+    await ref.set(lotteryData);
+
+    // 广播到聊天室
+    const info = formatLotteryForChat(lotteryData);
+    messagesRef.push({
+        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
+        text: info, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
+    });
+
+    alert('✅ 抽奖已创建并广播！');
+    loadLotteryPage();
+}
+
+function formatLotteryForChat(lottery) {
+    const endDate = new Date(lottery.endTime);
+    const startDate = new Date(lottery.startTime || lottery.createdAt);
+    const timeStr = endDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const startStr = startDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const prizes = lottery.prizes || [];
+
+    let info = `🎁 ${lottery.title}\n`;
+    info += `──────────────────\n`;
+    info += `已开奖: 0  未开奖: 1  取消: 0\n`;
+    info += `──────────────────\n`;
+    info += `├活动类型: 群抽奖\n`;
+    info += `├定时开奖: ${timeStr}  UTC+8\n`;
+    info += `├参与条件: 发送 #参与抽奖\n`;
+    info += `├抽奖开始时间: ${startStr}  UTC+8\n`;
+    info += `├奖品列表:\n`;
+    prizes.forEach(p => { info += `│  ├ ${p.name} x ${p.count || 1}\n`; });
+    info += `──────────────────\n`;
+    info += `[如何参与？]在群组中发送 #参与抽奖，参与活动。\n`;
+    info += `发送『抽奖』查询当前群组的抽奖`;
+    return info;
+}
+
+async function drawNow(key) {
+    const s = await lotteryRef.child(key).once('value');
+    const lottery = s.val();
+    if (!lottery) return;
+    const participants = Object.values(lottery.participants || {});
+    if (participants.length === 0) { alert('没有参与者'); return; }
+    
+    const count = Math.min(lottery.winnerCount || 1, participants.length);
+    const shuffled = [...participants].sort(() => Math.random() - 0.5);
+    const winners = shuffled.slice(0, count);
+
+    await lotteryRef.child(key).update({ status: 'won', winners, drawTime: Date.now() });
+
+    // 广播结果
+    const prizes = lottery.prizes || [];
+    let msg = `🎉 抽奖结果公布！\n🎁 ${lottery.title}\n──────────────────\n中奖名单：\n`;
+    winners.forEach((w, i) => { msg += `🏆 ${w.name} - ${prizes[i]?.name || prizes[0]?.name || '奖品'}\n`; });
+    msg += `──────────────────\n恭喜以上中奖用户！`;
+    
+    messagesRef.push({
+        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
+        text: msg, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
+    });
+
+    alert('✅ 开奖完成！');
+    loadLotteryPage();
+}
+
+async function broadcastLottery(key) {
+    const s = await lotteryRef.child(key).once('value');
+    const lottery = s.val();
+    if (!lottery) return;
+    const info = formatLotteryForChat(lottery);
+    messagesRef.push({
+        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
+        text: info, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
+    });
+    alert('✅ 已广播');
+}
+
+async function cancelLottery(key) {
+    if (confirm('取消此抽奖？')) {
+        await lotteryRef.child(key).update({ status: 'cancelled' });
+        messagesRef.push({
+            userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
+            text: '⚠️ 抽奖活动已取消', timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'warning'
+        });
+        alert('已取消');
+        loadLotteryPage();
+    }
+}
+async function deleteLottery(key) {
+    if (confirm('删除此抽奖？')) { await lotteryRef.child(key).remove(); alert('已删除'); loadLotteryPage(); }
+}
+
+// ==================== 系统设置 ====================
+function loadSettings() {
+    document.getElementById('contentBody').innerHTML = `
+        <div class="table-container" style="max-width:500px;"><div class="table-header">⚙️ 系统设置</div>
+        <div style="padding:16px;">
+            <button class="action-btn danger" onclick="if(confirm('清空所有消息？')){messagesRef.remove();alert('已清空');}">🗑️ 清空消息</button>
+            <button class="action-btn danger" onclick="if(confirm('清空所有用户？')){accountsRef.remove();usersRef.remove();alert('已清空');}" style="margin-left:10px;">🗑️ 清空用户</button>
+        </div></div>`;
+}
+
+loadDashboard();
+</script>
 </body>
 </html>
