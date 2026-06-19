@@ -157,10 +157,11 @@
         .msg-bubble.user-bubble { background: #212121; }
         .msg-row.mine .msg-bubble { background: #2b5278; border-radius: 12px 6px 6px 12px; }
         .msg-bubble.bot-bubble { background: #1a2e1a; border: 1px solid #27ae60; border-radius: 6px 12px 12px 6px; }
-        .msg-bubble.warning-bubble { background: #3a2a1a; border: 1px solid #e74c3c; border-radius: 6px 12px 12px 6px; }
-        .msg-bubble.gold-bubble { background: #2a2510; border: 1px solid #f0c040; border-radius: 6px 12px 12px 6px; }
+        .msg-bubble.warning-bubble { background: #3a2a1a; border: 1px solid #e74c3c; }
+        .msg-bubble.lottery-bubble { background: #1a1a2e; border: 1px solid #f0c040; border-radius: 8px 12px 12px 8px; white-space: pre-line; font-family: 'Courier New', monospace; font-size: 13px; }
 
         .msg-text { font-size: 14px; line-height: 1.4; word-break: break-word; padding-right: 42px; }
+        .msg-text.lottery-text { padding-right: 8px; font-size: 13px; }
         .msg-time { font-size: 10px; color: rgba(255,255,255,0.4); position: absolute; bottom: 4px; right: 7px; }
 
         .context-menu {
@@ -168,17 +169,14 @@
             border: 1px solid #2a2a2a; border-radius: 12px;
             padding: 6px 0; z-index: 200; display: none;
             min-width: 150px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            opacity: 0; transform: scale(0.9);
-            transition: opacity 0.15s, transform 0.15s;
         }
 
-        .context-menu.show { display: block; opacity: 1; transform: scale(1); }
+        .context-menu.show { display: block; }
 
         .context-menu-item {
             padding: 12px 20px; cursor: pointer;
             font-size: 15px; display: flex; align-items: center;
-            gap: 12px; transition: 0.15s; color: #ffffff;
-            -webkit-tap-highlight-color: transparent;
+            gap: 12px; color: #ffffff;
         }
 
         .context-menu-item:active { background: #252525; }
@@ -218,8 +216,6 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
-        .send-btn:active { opacity: 0.7; }
-
         .online-panel {
             position: fixed; right: 0; top: 0;
             height: 100%; width: 260px;
@@ -255,22 +251,31 @@
 
         .online-overlay.open { display: block; }
 
-        /* 抽奖提示弹窗 */
         .lottery-toast {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: #1a1a1a; border: 2px solid #f0c040;
             border-radius: 16px; padding: 24px;
             z-index: 300; text-align: center;
-            display: none; min-width: 280px;
+            display: none; min-width: 300px; max-width: 90%;
         }
         .lottery-toast.show { display: block; }
-        .lottery-toast h3 { color: #f0c040; margin-bottom: 8px; }
-        .lottery-toast p { color: #aaa; font-size: 13px; margin-bottom: 12px; }
+        .lottery-toast h3 { color: #f0c040; margin-bottom: 12px; font-size: 18px; }
+        .lottery-toast .lottery-info { 
+            text-align: left; color: #ccc; font-size: 13px; 
+            line-height: 1.8; margin-bottom: 16px;
+            background: #0f0f0f; padding: 12px; border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-line;
+        }
         .lottery-toast button {
             padding: 10px 30px; background: #f0c040;
             border: none; border-radius: 20px; color: #000;
             font-weight: 600; cursor: pointer; font-size: 14px;
+            margin: 4px;
+        }
+        .lottery-toast button.secondary {
+            background: #333; color: #fff;
         }
 
         ::-webkit-scrollbar { width: 4px; }
@@ -331,7 +336,7 @@
         </div>
 
         <div class="input-bar">
-            <input type="text" id="messageInput" placeholder="输入消息... (发送 #参与抽奖 参加活动)" autocomplete="off">
+            <input type="text" id="messageInput" placeholder="输入消息... (发送 #参与抽奖 或 抽奖 查询)" autocomplete="off">
             <button class="send-btn" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -346,18 +351,17 @@
 
     <div class="online-overlay" id="onlineOverlay" onclick="toggleOnlinePanel()"></div>
     <div class="online-panel" id="onlinePanel">
-        <div class="online-header">
-            <span>在线用户</span>
-            <button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-times"></i></button>
-        </div>
+        <div class="online-header"><span>在线用户</span><button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-times"></i></button></div>
         <div class="online-list" id="onlineList"></div>
     </div>
 
-    <!-- 抽奖参与提示 -->
     <div class="lottery-toast" id="lotteryToast">
-        <h3 id="lotteryTitle">🎰 抽奖</h3>
-        <p id="lotteryMsg"></p>
-        <button onclick="closeLotteryToast()">知道了</button>
+        <h3 id="lotteryTitle">🎁 抽奖活动</h3>
+        <div class="lottery-info" id="lotteryInfo"></div>
+        <div id="lotteryActions">
+            <button id="lotteryJoinBtn" onclick="joinLotteryFromToast()">✅ 参与抽奖</button>
+            <button class="secondary" onclick="closeLotteryToast()">关闭</button>
+        </div>
     </div>
 
     <script>
@@ -377,6 +381,7 @@
         let oldestMessageKey = null;
         let allMessages = {};
         let selectedMsgKey = null, selectedMsgData = null;
+        let currentLotteryKey = null;
         const MESSAGES_PER_PAGE = 50;
         const BOT_CONFIG_ID = 'bot_txchat';
 
@@ -418,105 +423,192 @@
 
         function init() {
             const savedUser = localStorage.getItem('telechat_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                enterChatRoom();
-            }
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && currentUser) {
-                    sendMessage();
-                }
-            });
-
-            document.addEventListener('click', function(e) {
+            if (savedUser) { currentUser = JSON.parse(savedUser); enterChatRoom(); }
+            document.addEventListener('keydown', e => { if (e.key === 'Enter' && currentUser) sendMessage(); });
+            document.addEventListener('click', e => {
                 const menu = document.getElementById('contextMenu');
-                if (menu.classList.contains('show') && !menu.contains(e.target) && !e.target.closest('.msg-row')) {
-                    closeContextMenu();
-                }
+                if (menu.classList.contains('show') && !menu.contains(e.target) && !e.target.closest('.msg-row')) closeContextMenu();
             });
-
-            if (mutesRef) {
-                mutesRef.on('value', function(snapshot) {
-                    const mutes = snapshot.val() || {};
-                    for (const uid in mutes) userMuteUntil[uid] = mutes[uid].until;
-                    updateMuteUI();
-                });
-            }
-            if (warnsRef) {
-                warnsRef.on('value', function(snapshot) {
-                    const warns = snapshot.val() || {};
-                    for (const uid in warns) userAdWarnCount[uid] = warns[uid].count || 0;
-                });
-            }
+            if (mutesRef) mutesRef.on('value', snapshot => {
+                const mutes = snapshot.val() || {};
+                for (const uid in mutes) userMuteUntil[uid] = mutes[uid].until;
+                updateMuteUI();
+            });
+            if (warnsRef) warnsRef.on('value', snapshot => {
+                const warns = snapshot.val() || {};
+                for (const uid in warns) userAdWarnCount[uid] = warns[uid].count || 0;
+            });
         }
 
-        // ==================== 抽奖功能（修复版） ====================
-        async function joinLottery() {
-            if (!currentUser) {
-                console.log('未登录');
-                return;
-            }
-            
-            console.log('开始参与抽奖...');
-            
-            try {
-                const snapshot = await lotteryRef.once('value');
-                const lotteries = snapshot.val() || {};
-                
-                console.log('所有抽奖数据:', lotteries);
-                
-                // 查找进行中的抽奖
-                const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
-                
-                console.log('进行中的抽奖:', activeLotteries.length);
-                
-                if (activeLotteries.length === 0) {
-                    showLotteryToast('❌', '当前没有进行中的抽奖活动');
-                    return false;
-                }
+        // ==================== 抽奖核心 ====================
+        function formatLotteryInfo(lottery) {
+            const now = Date.now();
+            const endTime = lottery.endTime;
+            const startTime = lottery.startTime || lottery.createdAt;
+            const isEnded = lottery.status === 'ended';
+            const isWon = lottery.status === 'won';
+            const winners = lottery.winners || [];
+            const prizes = lottery.prizes || [];
+            const participants = lottery.participants || {};
+            const participantCount = Object.keys(participants).length;
+            const winnerCount = lottery.winnerCount || 1;
 
-                // 取第一个进行中的抽奖
-                const [lotteryKey, lottery] = activeLotteries[0];
-                
-                console.log('参与抽奖:', lotteryKey, lottery.title);
-                
-                // 检查是否已参与
-                const participants = lottery.participants || {};
-                if (participants[currentUser.id]) {
-                    showLotteryToast('⚠️', '你已经参与过这个抽奖了！');
-                    return true;
-                }
+            const endDate = new Date(endTime);
+            const startDate = new Date(startTime);
+            const timeStr = endDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+            const startStr = startDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
-                // 添加参与记录
-                await lotteryRef.child(lotteryKey).child('participants').child(currentUser.id).set({
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    avatar: currentUser.avatar,
-                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+            let info = '';
+            info += `🎁 ${lottery.title}\n`;
+            info += `──────────────────\n`;
+            info += `已开奖: ${isEnded||isWon ? 1 : 0}  未开奖: ${isEnded||isWon ? 0 : 1}  取消: ${lottery.status==='cancelled' ? 1 : 0}\n`;
+            info += `──────────────────\n`;
+            info += `├活动类型: ${lottery.type || '群抽奖'}\n`;
+            info += `├定时开奖: ${timeStr}  UTC+8\n`;
+            info += `├参与条件: 发送 #参与抽奖\n`;
+            info += `├抽奖开始时间: ${startStr}  UTC+8\n`;
+            info += `├参与人数: ${participantCount} 人\n`;
+            info += `├中奖人数: ${winnerCount} 人\n`;
+            info += `├奖品列表:\n`;
+            prizes.forEach((p, i) => {
+                info += `│  ├ ${p.name} x ${p.count || 1}\n`;
+            });
+            if (winners.length > 0) {
+                info += `├中奖名单:\n`;
+                winners.forEach((w, i) => {
+                    info += `│  ├ 🏆 ${w.name}\n`;
                 });
-
-                const participantCount = Object.keys(participants).length + 1;
-                showLotteryToast('✅', `成功参与「${lottery.title}」！\n奖品：${lottery.prize}\n当前参与人数：${participantCount}人`);
-                
-                console.log('参与成功！');
-                return true;
-            } catch (error) {
-                console.error('参与抽奖失败:', error);
-                showLotteryToast('❌', '参与失败，请重试');
-                return false;
             }
+            info += `──────────────────\n`;
+            if (!isEnded && !isWon) {
+                info += `[如何参与？]在群组中发送 #参与抽奖，参与活动。\n`;
+            }
+            info += `发送『抽奖』查询当前群组的抽奖`;
+            return info;
         }
 
-        function showLotteryToast(title, msg) {
-            document.getElementById('lotteryTitle').textContent = title + ' 抽奖';
-            document.getElementById('lotteryMsg').textContent = msg;
+        function sendLotteryBotMessage(lottery) {
+            const info = formatLotteryInfo(lottery);
+            messagesRef.push({
+                userId: BOT_CONFIG_ID,
+                userName: 'TxChat小助手',
+                userAvatar: '#27ae60',
+                text: info,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                type: 'lottery'
+            });
+        }
+
+        function sendWinnersBotMessage(lottery) {
+            const winners = lottery.winners || [];
+            const prizes = lottery.prizes || [];
+            let msg = `🎉 抽奖结果公布！\n`;
+            msg += `🎁 ${lottery.title}\n`;
+            msg += `──────────────────\n`;
+            msg += `中奖名单：\n`;
+            winners.forEach((w, i) => {
+                const prize = prizes[i] || prizes[0];
+                msg += `🏆 ${w.name} - ${prize ? prize.name : '奖品'}\n`;
+            });
+            msg += `──────────────────\n`;
+            msg += `恭喜以上中奖用户！`;
+            
+            messagesRef.push({
+                userId: BOT_CONFIG_ID,
+                userName: 'TxChat小助手',
+                userAvatar: '#27ae60',
+                text: msg,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                type: 'lottery'
+            });
+        }
+
+        function showLotteryToast(lottery) {
+            const info = formatLotteryInfo(lottery);
+            document.getElementById('lotteryTitle').textContent = '🎁 ' + lottery.title;
+            document.getElementById('lotteryInfo').textContent = info;
+            
+            const isEnded = lottery.status === 'ended' || lottery.status === 'won';
+            const joinBtn = document.getElementById('lotteryJoinBtn');
+            if (joinBtn) {
+                joinBtn.style.display = isEnded ? 'none' : 'inline-block';
+            }
+            
             document.getElementById('lotteryToast').classList.add('show');
-            setTimeout(() => closeLotteryToast(), 5000);
         }
 
         function closeLotteryToast() {
             document.getElementById('lotteryToast').classList.remove('show');
+            currentLotteryKey = null;
+        }
+
+        async function queryLottery() {
+            if (!currentUser) return;
+            
+            const snapshot = await lotteryRef.once('value');
+            const lotteries = snapshot.val() || {};
+            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
+            
+            if (activeLotteries.length === 0) {
+                showToast('📭 当前没有进行中的抽奖活动');
+                return;
+            }
+
+            const [key, lottery] = activeLotteries[0];
+            currentLotteryKey = key;
+            showLotteryToast(lottery);
+        }
+
+        async function joinLottery() {
+            if (!currentUser) { showToast('请先登录'); return false; }
+            
+            const snapshot = await lotteryRef.once('value');
+            const lotteries = snapshot.val() || {};
+            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
+            
+            if (activeLotteries.length === 0) {
+                showToast('📭 当前没有进行中的抽奖活动');
+                return false;
+            }
+
+            const [key, lottery] = activeLotteries[0];
+            currentLotteryKey = key;
+            const participants = lottery.participants || {};
+            
+            if (participants[currentUser.id]) {
+                showLotteryToast(lottery);
+                showToast('⚠️ 你已经参与过这个抽奖了');
+                return true;
+            }
+
+            await lotteryRef.child(key).child('participants').child(currentUser.id).set({
+                id: currentUser.id,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                joinedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            const count = Object.keys(participants).length + 1;
+            showToast(`✅ 成功参与「${lottery.title}」！当前 ${count} 人参与`);
+            
+            // 更新弹窗信息
+            const updatedSnapshot = await lotteryRef.child(key).once('value');
+            const updatedLottery = updatedSnapshot.val();
+            showLotteryToast(updatedLottery);
+            
+            return true;
+        }
+
+        function joinLotteryFromToast() {
+            joinLottery().then(() => {
+                setTimeout(() => {
+                    if (currentLotteryKey) {
+                        lotteryRef.child(currentLotteryKey).once('value').then(snapshot => {
+                            if (snapshot.val()) showLotteryToast(snapshot.val());
+                        });
+                    }
+                }, 500);
+            });
         }
 
         // ==================== 机器人 ====================
@@ -526,9 +618,7 @@
                     userId: BOT_CONFIG_ID,
                     userName: config.name || 'TxChat小助手',
                     userAvatar: config.avatar || '#27ae60',
-                    text: text,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: type
+                    text: text, timestamp: firebase.database.ServerValue.TIMESTAMP, type: type
                 });
             });
         }
@@ -550,10 +640,8 @@
             if (!userMsgLog[userId]) userMsgLog[userId] = [];
             userMsgLog[userId] = userMsgLog[userId].filter(m => now - m.time < 10000);
             userMsgLog[userId].push({ text, time: now });
-            const same = userMsgLog[userId].filter(m => m.text === text);
-            if (same.length >= 5) return { type: 'repeat' };
-            const recent = userMsgLog[userId].filter(m => now - m.time < 3000);
-            if (recent.length > 4) return { type: 'fast' };
+            if (userMsgLog[userId].filter(m => m.text === text).length >= 5) return { type: 'repeat' };
+            if (userMsgLog[userId].filter(m => now - m.time < 3000).length > 4) return { type: 'fast' };
             return null;
         }
 
@@ -561,8 +649,7 @@
             const config = await getRobotConfig();
             if (!config.antiPornEnabled) return null;
             const words = config.pornWords || getDefaultConfig().pornWords;
-            const lower = text.toLowerCase();
-            for (const w of words) { if (lower.includes(w.toLowerCase())) return w; }
+            for (const w of words) { if (text.toLowerCase().includes(w.toLowerCase())) return w; }
             return null;
         }
 
@@ -570,8 +657,7 @@
             const config = await getRobotConfig();
             if (!config.antiAdEnabled) return null;
             const words = config.adWords || getDefaultConfig().adWords;
-            const lower = text.toLowerCase();
-            for (const w of words) { if (lower.includes(w.toLowerCase())) return w; }
+            for (const w of words) { if (text.toLowerCase().includes(w.toLowerCase())) return w; }
             if (config.blockUrls !== false && /(https?:\/\/|www\.|\.com|\.cn|\.net)/i.test(text)) return '链接';
             return null;
         }
@@ -581,8 +667,7 @@
             userMuteUntil[userId] = until;
             if (mutesRef) mutesRef.child(userId).set({ until, reason, mutedAt: firebase.database.ServerValue.TIMESTAMP });
             const mins = Math.floor(duration / 60000);
-            const timeStr = mins >= 60 ? (mins/60)+'小时' : mins+'分钟';
-            sendBotMessage(`🚫 ${userName} 因【${reason}】被禁言${timeStr}`, 'warning');
+            sendBotMessage(`🚫 ${userName} 因【${reason}】被禁言${mins>=60?(mins/60)+'小时':mins+'分钟'}`, 'warning');
             delete userMsgLog[userId];
         }
 
@@ -596,58 +681,41 @@
                 input.disabled = true;
             } else {
                 input.classList.remove('muted');
-                input.placeholder = '输入消息... (发送 #参与抽奖 参加活动)';
+                input.placeholder = '输入消息... (发送 #参与抽奖 或 抽奖 查询)';
                 input.disabled = false;
             }
         }
 
         // ==================== 发送消息 ====================
         async function sendMessage() {
-            if (!currentUser) {
-                console.log('未登录，无法发送消息');
-                return;
-            }
-
+            if (!currentUser) return;
             const mutedUntil = userMuteUntil[currentUser.id];
-            if (mutedUntil && Date.now() < mutedUntil) {
-                showToast(`🚫 已禁言，剩余 ${Math.ceil((mutedUntil-Date.now())/60000)} 分钟`);
-                return;
-            }
-
+            if (mutedUntil && Date.now() < mutedUntil) { showToast(`🚫 已禁言`); return; }
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             if (!text) return;
+            input.value = '';
 
-            console.log('发送消息:', text);
-
-            // ===== 检测抽奖参与 =====
-            if (text === '#参与抽奖' || text === '#抽奖' || text === '参与抽奖') {
-                input.value = '';
-                console.log('检测到抽奖指令');
-                const result = await joinLottery();
-                if (!result) {
-                    // 参与失败，不继续处理
-                }
+            // 抽奖指令
+            if (text === '#参与抽奖' || text === '参与抽奖') {
+                await joinLottery();
+                return;
+            }
+            if (text === '抽奖' || text === '#抽奖' || text === '查询抽奖') {
+                await queryLottery();
                 return;
             }
 
             const config = await getRobotConfig();
 
-            // 色情检测
-            if (config.antiPornEnabled) {
-                const pornWord = await checkPorn(text);
-                if (pornWord) {
-                    input.value = '';
-                    showToast('⚠️ 消息包含违规内容');
-                    muteUser(currentUser.id, currentUser.name, (config.pornMuteMinutes||60)*60000, '发送色情内容');
-                    return;
-                }
+            if (config.antiPornEnabled && await checkPorn(text)) {
+                showToast('⚠️ 消息包含违规内容');
+                muteUser(currentUser.id, currentUser.name, (config.pornMuteMinutes||60)*60000, '发送色情内容');
+                return;
             }
 
-            // 广告检测
             const adWord = await checkAd(text);
             if (adWord) {
-                input.value = '';
                 userAdWarnCount[currentUser.id] = (userAdWarnCount[currentUser.id]||0) + 1;
                 if (warnsRef) warnsRef.child(currentUser.id).set({ count: userAdWarnCount[currentUser.id], lastWarn: firebase.database.ServerValue.TIMESTAMP });
                 const limit = config.adWarnLimit || 3;
@@ -656,260 +724,160 @@
                     userAdWarnCount[currentUser.id] = 0;
                     if (warnsRef) warnsRef.child(currentUser.id).remove();
                 } else {
-                    showToast(`⚠️ 请勿发送广告！警告 ${userAdWarnCount[currentUser.id]}/${limit}`);
+                    showToast(`⚠️ 请勿发送广告！${userAdWarnCount[currentUser.id]}/${limit}`);
                     sendBotMessage(`⚠️ ${currentUser.name} 请勿发送广告！${userAdWarnCount[currentUser.id]}/${limit}`, 'warning');
                 }
                 return;
             }
 
-            // 刷屏检测
-            if (config.antiSpamEnabled !== false) {
-                const spam = checkSpam(currentUser.id, text);
-                if (spam) {
-                    input.value = '';
-                    const reason = spam.type === 'repeat' ? '重复发送相同消息' : '发送消息过快';
-                    showToast('⚠️ ' + reason);
-                    muteUser(currentUser.id, currentUser.name, (config.spamMuteMinutes||30)*60000, reason);
-                    return;
-                }
+            if (config.antiSpamEnabled !== false && checkSpam(currentUser.id, text)) {
+                showToast('⚠️ 发送过快');
+                muteUser(currentUser.id, currentUser.name, (config.spamMuteMinutes||30)*60000, '刷屏');
+                return;
             }
 
-            // 发送消息
-            console.log('消息通过审核，发送中...');
             messagesRef.push({
-                userId: currentUser.id,
-                userName: currentUser.name,
-                userAvatar: currentUser.avatar,
-                text: text,
+                userId: currentUser.id, userName: currentUser.name,
+                userAvatar: currentUser.avatar, text: text,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
-            input.value = ''; input.focus();
+            input.focus();
         }
 
         // ==================== 长按菜单 ====================
         let longPressTimer, touchStartY, touchStartX;
-
         function setupLongPress(el, msgKey, msgData) {
             el.oncontextmenu = e => e.preventDefault();
-            el.addEventListener('touchstart', function(e) {
+            el.addEventListener('touchstart', e => {
                 touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
-                longPressTimer = setTimeout(() => {
-                    selectedMsgKey = msgKey; selectedMsgData = msgData;
-                    showContextMenu(e.touches[0]);
-                    if (navigator.vibrate) navigator.vibrate(15);
-                }, 600);
+                longPressTimer = setTimeout(() => { selectedMsgKey=msgKey; selectedMsgData=msgData; showContextMenu(e.touches[0]); if(navigator.vibrate)navigator.vibrate(15); }, 600);
             }, { passive: false });
-            el.addEventListener('touchmove', function(e) {
-                if (Math.abs(e.touches[0].clientX-touchStartX)>10 || Math.abs(e.touches[0].clientY-touchStartY)>10) clearTimeout(longPressTimer);
-            }, { passive: false });
-            el.addEventListener('touchend', () => clearTimeout(longPressTimer));
-            el.addEventListener('touchcancel', () => clearTimeout(longPressTimer));
-            el.addEventListener('contextmenu', function(e) {
-                e.preventDefault(); selectedMsgKey = msgKey; selectedMsgData = msgData; showContextMenu(e);
-            });
+            el.addEventListener('touchmove', e => { if(Math.abs(e.touches[0].clientX-touchStartX)>10||Math.abs(e.touches[0].clientY-touchStartY)>10)clearTimeout(longPressTimer); }, { passive: false });
+            el.addEventListener('touchend', ()=>clearTimeout(longPressTimer));
+            el.addEventListener('touchcancel', ()=>clearTimeout(longPressTimer));
+            el.addEventListener('contextmenu', e => { e.preventDefault(); selectedMsgKey=msgKey; selectedMsgData=msgData; showContextMenu(e); });
         }
-
         function showContextMenu(event) {
-            const menu = document.getElementById('contextMenu');
-            const isMine = currentUser && selectedMsgData && selectedMsgData.userId === currentUser.id;
-            const isBot = selectedMsgData && (selectedMsgData.type === 'bot' || selectedMsgData.userId === BOT_CONFIG_ID);
-            document.querySelector('.context-menu-item.recall').style.display = (isMine && !isBot) ? 'flex' : 'none';
-            document.querySelector('.context-menu-item.delete').style.display = (isMine && !isBot) ? 'flex' : 'none';
-            const cx = event.clientX || (event.touches?.[0]?.clientX || 100);
-            const cy = event.clientY || (event.touches?.[0]?.clientY || 100);
-            let x = cx, y = cy;
-            if (x+160 > innerWidth) x = innerWidth-170;
-            if (y+140 > innerHeight) y = innerHeight-150;
-            if (x<10) x=10; if (y<10) y=10;
-            menu.style.left = x+'px'; menu.style.top = y+'px';
-            menu.classList.add('show');
+            const menu=document.getElementById('contextMenu');
+            const isMine=currentUser&&selectedMsgData&&selectedMsgData.userId===currentUser.id;
+            const isBot=selectedMsgData&&(selectedMsgData.type==='bot'||selectedMsgData.userId===BOT_CONFIG_ID);
+            document.querySelector('.context-menu-item.recall').style.display=(isMine&&!isBot)?'flex':'none';
+            document.querySelector('.context-menu-item.delete').style.display=(isMine&&!isBot)?'flex':'none';
+            const cx=event.clientX||(event.touches?.[0]?.clientX||100), cy=event.clientY||(event.touches?.[0]?.clientY||100);
+            let x=cx,y=cy;
+            if(x+160>innerWidth)x=innerWidth-170; if(y+140>innerHeight)y=innerHeight-150;
+            if(x<10)x=10; if(y<10)y=10;
+            menu.style.left=x+'px'; menu.style.top=y+'px'; menu.classList.add('show');
         }
-
-        function copyMessage() {
-            if (selectedMsgData?.text && !selectedMsgData.recalled) {
-                navigator.clipboard.writeText(selectedMsgData.text).then(() => showToast('✅ 已复制')).catch(() => showToast('复制失败'));
-            }
-            closeContextMenu();
-        }
-
-        function recallMessage() {
-            if (!selectedMsgKey || !currentUser || selectedMsgData.userId !== currentUser.id) { showToast('只能撤回自己的消息'); closeContextMenu(); return; }
-            if (Date.now()-selectedMsgData.timestamp > 120000) { showToast('超过2分钟无法撤回'); closeContextMenu(); return; }
-            messagesRef.child(selectedMsgKey).update({ text: '该消息已被撤回', recalled: true });
-            closeContextMenu(); showToast('✅ 已撤回');
-        }
-
-        function deleteMessage() {
-            if (!selectedMsgKey || !currentUser || selectedMsgData.userId !== currentUser.id) { showToast('只能删除自己的消息'); closeContextMenu(); return; }
-            if (confirm('确定删除？')) { messagesRef.child(selectedMsgKey).remove(); closeContextMenu(); showToast('🗑️ 已删除'); }
-            else closeContextMenu();
-        }
-
-        function closeContextMenu() { document.getElementById('contextMenu').classList.remove('show'); selectedMsgKey=null; selectedMsgData=null; }
+        function copyMessage(){ if(selectedMsgData?.text&&!selectedMsgData.recalled){ navigator.clipboard.writeText(selectedMsgData.text).then(()=>showToast('✅ 已复制')).catch(()=>showToast('复制失败')); } closeContextMenu(); }
+        function recallMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能撤回自己的消息'); closeContextMenu(); return; } if(Date.now()-selectedMsgData.timestamp>120000){ showToast('超过2分钟'); closeContextMenu(); return; } messagesRef.child(selectedMsgKey).update({text:'该消息已被撤回',recalled:true}); closeContextMenu(); showToast('✅ 已撤回'); }
+        function deleteMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能删除自己的消息'); closeContextMenu(); return; } if(confirm('确定删除？')){ messagesRef.child(selectedMsgKey).remove(); closeContextMenu(); showToast('🗑️ 已删除'); } else closeContextMenu(); }
+        function closeContextMenu(){ document.getElementById('contextMenu').classList.remove('show'); selectedMsgKey=null; selectedMsgData=null; }
 
         function showToast(text) {
-            let toast = document.getElementById('toast');
-            if (!toast) { toast = document.createElement('div'); toast.id = 'toast'; toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:white;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;'; document.body.appendChild(toast); }
-            toast.textContent = text; toast.style.opacity = '1';
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => toast.style.opacity='0', 2000);
+            let toast=document.getElementById('toast');
+            if(!toast){ toast=document.createElement('div'); toast.id='toast'; toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:white;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;'; document.body.appendChild(toast); }
+            toast.textContent=text; toast.style.opacity='1'; clearTimeout(toast._timeout); toast._timeout=setTimeout(()=>toast.style.opacity='0',2000);
         }
 
         // ==================== 登录/注册 ====================
         function switchTab(tab) {
-            document.getElementById('loginTab').classList.remove('active');
-            document.getElementById('registerTab').classList.remove('active');
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'none';
-            document.getElementById('authError').textContent = '';
-            if (tab === 'login') { document.getElementById('loginTab').classList.add('active'); document.getElementById('loginForm').style.display = 'block'; }
-            else { document.getElementById('registerTab').classList.add('active'); document.getElementById('registerForm').style.display = 'block'; }
+            document.getElementById('loginTab').classList.remove('active'); document.getElementById('registerTab').classList.remove('active');
+            document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='none';
+            document.getElementById('authError').textContent='';
+            if(tab==='login'){ document.getElementById('loginTab').classList.add('active'); document.getElementById('loginForm').style.display='block'; }
+            else{ document.getElementById('registerTab').classList.add('active'); document.getElementById('registerForm').style.display='block'; }
         }
-
         function handleRegister() {
-            const username = document.getElementById('regUsername').value.trim();
-            const pw = document.getElementById('regPassword').value;
-            const pw2 = document.getElementById('regPassword2').value;
-            if (!username || username.length<3 || username.length>15) { document.getElementById('authError').textContent='用户名3-15字符'; return; }
-            if (pw.length<6) { document.getElementById('authError').textContent='密码至少6位'; return; }
-            if (pw!==pw2) { document.getElementById('authError').textContent='两次密码不一致'; return; }
-            database.ref('accounts/'+username).once('value').then(snapshot => {
-                if (snapshot.exists()) { document.getElementById('authError').textContent='用户名已存在'; return Promise.reject(); }
-                return database.ref('accounts/'+username).set({ username, password:pw, avatar:randomColor(), createdAt:firebase.database.ServerValue.TIMESTAMP });
-            }).then(() => {
-                currentUser = { id:username, name:username, avatar:randomColor(), online:true };
-                localStorage.setItem('telechat_user', JSON.stringify(currentUser));
-                enterChatRoom();
-            }).catch(() => {});
+            const u=document.getElementById('regUsername').value.trim(), p=document.getElementById('regPassword').value, p2=document.getElementById('regPassword2').value;
+            if(!u||u.length<3||u.length>15){ document.getElementById('authError').textContent='用户名3-15字符'; return; }
+            if(p.length<6){ document.getElementById('authError').textContent='密码至少6位'; return; }
+            if(p!==p2){ document.getElementById('authError').textContent='两次密码不一致'; return; }
+            database.ref('accounts/'+u).once('value').then(s=>{ if(s.exists()){ document.getElementById('authError').textContent='用户名已存在'; return Promise.reject(); } return database.ref('accounts/'+u).set({username:u,password:p,avatar:randomColor(),createdAt:firebase.database.ServerValue.TIMESTAMP}); }).then(()=>{ currentUser={id:u,name:u,avatar:randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); }).catch(()=>{});
         }
-
         function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const pw = document.getElementById('loginPassword').value;
-            if (!username||!pw) { document.getElementById('authError').textContent='请输入用户名和密码'; return; }
-            database.ref('accounts/'+username).once('value').then(snapshot => {
-                if (!snapshot.exists()) { document.getElementById('authError').textContent='用户不存在'; return; }
-                if (snapshot.val().password !== pw) { document.getElementById('authError').textContent='密码错误'; return; }
-                currentUser = { id:username, name:username, avatar:snapshot.val().avatar||randomColor(), online:true };
-                localStorage.setItem('telechat_user', JSON.stringify(currentUser));
-                enterChatRoom();
-            });
+            const u=document.getElementById('loginUsername').value.trim(), p=document.getElementById('loginPassword').value;
+            if(!u||!p){ document.getElementById('authError').textContent='请输入用户名和密码'; return; }
+            database.ref('accounts/'+u).once('value').then(s=>{ if(!s.exists()){ document.getElementById('authError').textContent='用户不存在'; return; } if(s.val().password!==p){ document.getElementById('authError').textContent='密码错误'; return; } currentUser={id:u,name:u,avatar:s.val().avatar||randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); });
         }
-
         function handleLogout() {
-            if (currentUser && userRef) userRef.remove();
-            currentUser=null; userRef=null; allMessages={}; oldestMessageKey=null;
+            if(currentUser&&userRef)userRef.remove();
+            currentUser=null;userRef=null;allMessages={};oldestMessageKey=null;
             localStorage.removeItem('telechat_user');
-            document.getElementById('messagesArea').innerHTML='';
-            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('messagesArea').innerHTML=''; document.getElementById('mainApp').classList.remove('active');
             document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('messageInput').disabled=false;
-            document.getElementById('messageInput').classList.remove('muted');
+            document.getElementById('messageInput').disabled=false; document.getElementById('messageInput').classList.remove('muted');
         }
-
         function enterChatRoom() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.add('active');
-            document.getElementById('myAvatarSm').style.background=currentUser.avatar;
-            document.getElementById('myAvatarSm').textContent=currentUser.name[0].toUpperCase();
+            document.getElementById('authScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('active');
+            document.getElementById('myAvatarSm').style.background=currentUser.avatar; document.getElementById('myAvatarSm').textContent=currentUser.name[0].toUpperCase();
             document.getElementById('myNameSm').textContent=currentUser.name;
             userRef=usersRef.child(currentUser.id);
-            userRef.set({ id:currentUser.id, name:currentUser.name, avatar:currentUser.avatar, online:true, lastSeen:firebase.database.ServerValue.TIMESTAMP });
+            userRef.set({id:currentUser.id,name:currentUser.name,avatar:currentUser.avatar,online:true,lastSeen:firebase.database.ServerValue.TIMESTAMP});
             userRef.onDisconnect().remove();
-            welcomeUser(currentUser.name);
-            updateMuteUI();
-            loadLatestMessages();
-            listenForNewMessages();
-            usersRef.on('value', snapshot => updateOnlineUsers(snapshot.val()||{}));
+            welcomeUser(currentUser.name); updateMuteUI(); loadLatestMessages(); listenForNewMessages();
+            usersRef.on('value',s=>updateOnlineUsers(s.val()||{}));
         }
-
         function loadLatestMessages() {
-            const area=document.getElementById('messagesArea');
-            area.innerHTML='<div style="text-align:center;color:#888;padding:30px;">加载中...</div>';
-            messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value', snapshot => {
-                const msgs=snapshot.val()||{};
-                allMessages=msgs; area.innerHTML='';
-                const keys=Object.keys(msgs);
-                if (keys.length>0) { oldestMessageKey=keys[0]; keys.forEach(k => displayMessage(msgs[k],k,false)); updateLoadMoreButton(keys.length); }
-                else area.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
+            const a=document.getElementById('messagesArea'); a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">加载中...</div>';
+            messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value',s=>{
+                const ms=s.val()||{}; allMessages=ms; a.innerHTML=''; const ks=Object.keys(ms);
+                if(ks.length>0){ oldestMessageKey=ks[0]; ks.forEach(k=>displayMessage(ms[k],k,false)); updateLoadMoreButton(ks.length); }
+                else a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
                 scrollToBottom();
             });
         }
-
         function listenForNewMessages() {
-            messagesRef.limitToLast(1).on('child_added', snapshot => {
-                const msg=snapshot.val(), key=snapshot.key;
-                if (!allMessages[key] && currentUser) { allMessages[key]=msg; displayMessage(msg,key,true); if(!oldestMessageKey) oldestMessageKey=key; }
-            });
-            messagesRef.on('child_changed', snapshot => { allMessages[snapshot.key]=snapshot.val(); refreshMessages(); });
-            messagesRef.on('child_removed', snapshot => { delete allMessages[snapshot.key]; refreshMessages(); });
+            messagesRef.limitToLast(1).on('child_added',s=>{ const m=s.val(),k=s.key; if(!allMessages[k]&&currentUser){ allMessages[k]=m; displayMessage(m,k,true); if(!oldestMessageKey)oldestMessageKey=k; } });
+            messagesRef.on('child_changed',s=>{ allMessages[s.key]=s.val(); refreshMessages(); });
+            messagesRef.on('child_removed',s=>{ delete allMessages[s.key]; refreshMessages(); });
         }
-
         function refreshMessages() {
-            const area=document.getElementById('messagesArea'); area.innerHTML='';
-            const keys=Object.keys(allMessages).sort();
-            keys.forEach(k => displayMessage(allMessages[k],k,false));
-            if (keys.length===0) area.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
-            updateLoadMoreButton(keys.length);
+            const a=document.getElementById('messagesArea'); a.innerHTML=''; const ks=Object.keys(allMessages).sort();
+            ks.forEach(k=>displayMessage(allMessages[k],k,false));
+            if(ks.length===0)a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
+            updateLoadMoreButton(ks.length);
         }
-
         function loadMoreMessages() {
-            if (!oldestMessageKey) return;
-            const btn=document.getElementById('loadMoreBtn');
-            btn.textContent='加载中...'; btn.disabled=true;
-            messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE+1).once('value', snapshot => {
-                const msgs=snapshot.val()||{}, keys=Object.keys(msgs);
-                if (keys.length<=1) { btn.textContent='没有更多'; setTimeout(()=>btn.style.display='none',1500); return; }
-                keys.pop(); oldestMessageKey=keys[0];
-                keys.forEach(k => { if(!allMessages[k]) allMessages[k]=msgs[k]; });
-                refreshMessages(); btn.textContent='加载更多'; btn.disabled=false;
+            if(!oldestMessageKey)return; const b=document.getElementById('loadMoreBtn'); b.textContent='加载中...'; b.disabled=true;
+            messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE+1).once('value',s=>{
+                const ms=s.val()||{}, ks=Object.keys(ms);
+                if(ks.length<=1){ b.textContent='没有更多'; setTimeout(()=>b.style.display='none',1500); return; }
+                ks.pop(); oldestMessageKey=ks[0]; ks.forEach(k=>{ if(!allMessages[k])allMessages[k]=ms[k]; });
+                refreshMessages(); b.textContent='加载更多'; b.disabled=false;
             });
         }
-
-        function updateLoadMoreButton(c) { document.getElementById('loadMoreBtn').style.display = c>=MESSAGES_PER_PAGE?'block':'none'; }
-
+        function updateLoadMoreButton(c){ document.getElementById('loadMoreBtn').style.display=c>=MESSAGES_PER_PAGE?'block':'none'; }
         function displayMessage(msg, key, scroll=true) {
-            const area=document.getElementById('messagesArea');
-            if (!area || msg.type==='system') return;
+            const a=document.getElementById('messagesArea'); if(!a||msg.type==='system')return;
             const isMine=currentUser&&msg.userId===currentUser.id;
-            const isBot=msg.type==='bot'||msg.userId===BOT_CONFIG_ID;
-            const isWarning=msg.type==='warning';
-            const isGold=msg.type==='lottery'||(msg.text&&msg.text.includes('🎰'));
+            const isBot=msg.type==='bot'||msg.type==='warning'||msg.userId===BOT_CONFIG_ID;
+            const isLottery=msg.type==='lottery';
             const time=msg.timestamp?formatTime(msg.timestamp):'';
             const text=msg.recalled?'<span style="font-style:italic;color:#999;">该消息已被撤回</span>':escapeHtml(msg.text);
             const div=document.createElement('div');
-            if (isMine) div.className='msg-row mine';
-            else if (isBot||isWarning) div.className='msg-row bot';
-            else div.className='msg-row';
-            div.setAttribute('data-msg-key', key);
-            const senderClass = (isBot||isWarning) ? 'bot-sender' : 'user';
-            const bubbleClass = isWarning ? 'warning-bubble' : (isGold ? 'gold-bubble' : (isBot ? 'bot-bubble' : 'user-bubble'));
-            const avatarContent = (isBot||isWarning) ? '🤖' : (msg.userName||'?')[0].toUpperCase();
-            div.innerHTML = `<div class="msg-avatar" style="background:${msg.userAvatar||'#666'};">${avatarContent}</div><div>${!isMine?`<div class="msg-sender ${senderClass}">${escapeHtml(msg.userName)}${(isBot||isWarning)?' 🤖':''}</div>`:''}<div class="msg-bubble ${bubbleClass}"><div class="msg-text">${text}</div><div class="msg-time">${time}</div></div></div>`;
-            setupLongPress(div, key, msg);
-            area.appendChild(div);
-            if (scroll) setTimeout(scrollToBottom, 50);
+            if(isMine)div.className='msg-row mine'; else if(isBot||isLottery)div.className='msg-row bot'; else div.className='msg-row';
+            div.setAttribute('data-msg-key',key);
+            const senderClass=(isBot||isLottery)?'bot-sender':'user';
+            const bubbleClass=isLottery?'lottery-bubble':(msg.type==='warning'?'warning-bubble':(isBot?'bot-bubble':'user-bubble'));
+            const avatarContent=(isBot||isLottery)?'🤖':(msg.userName||'?')[0].toUpperCase();
+            const textClass=isLottery?'lottery-text':'';
+            div.innerHTML=`<div class="msg-avatar" style="background:${msg.userAvatar||'#666'};">${avatarContent}</div><div>${!isMine?`<div class="msg-sender ${senderClass}">${escapeHtml(msg.userName)}${(isBot||isLottery)?' 🤖':''}</div>`:''}<div class="msg-bubble ${bubbleClass}"><div class="msg-text ${textClass}">${text}</div>${!isLottery?`<div class="msg-time">${time}</div>`:''}</div></div>`;
+            setupLongPress(div,key,msg); a.appendChild(div);
+            if(scroll)setTimeout(scrollToBottom,50);
         }
-
-        function scrollToBottom() { const w=document.getElementById('messagesWrapper'); if(w) w.scrollTop=w.scrollHeight; }
-
+        function scrollToBottom(){ const w=document.getElementById('messagesWrapper'); if(w)w.scrollTop=w.scrollHeight; }
         function updateOnlineUsers(users) {
-            const list=document.getElementById('onlineList'), count=document.getElementById('onlineStatus');
-            const arr=Object.values(users);
-            if (list) list.innerHTML = arr.map(u => {
-                const muted = userMuteUntil[u.id] && Date.now()<userMuteUntil[u.id];
-                return `<div class="online-user"><div class="online-dot${muted?' muted':''}"></div><div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div><span>${escapeHtml(u.name)}${u.id===currentUser?.id?'(你)':''}</span>${muted?'<span class="muted-tag">禁言</span>':''}</div>`;
-            }).join('');
-            if (count) count.textContent = '在线: '+arr.length+' · 全球';
+            const l=document.getElementById('onlineList'),c=document.getElementById('onlineStatus'); const a=Object.values(users);
+            if(l)l.innerHTML=a.map(u=>{ const m=userMuteUntil[u.id]&&Date.now()<userMuteUntil[u.id]; return`<div class="online-user"><div class="online-dot${m?' muted':''}"></div><div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div><span>${escapeHtml(u.name)}${u.id===currentUser?.id?'(你)':''}</span>${m?'<span class="muted-tag">禁言</span>':''}</div>`; }).join('');
+            if(c)c.textContent='在线: '+a.length+' · 全球';
         }
-
-        function toggleOnlinePanel() { document.getElementById('onlinePanel').classList.toggle('open'); document.getElementById('onlineOverlay').classList.toggle('open'); }
-
-        function randomColor() { const c=['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4']; return c[Math.floor(Math.random()*c.length)]; }
-        function formatTime(ts) { if(!ts)return''; const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(t) { if(!t)return''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+        function toggleOnlinePanel(){ document.getElementById('onlinePanel').classList.toggle('open'); document.getElementById('onlineOverlay').classList.toggle('open'); }
+        function randomColor(){ const c=['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4']; return c[Math.floor(Math.random()*c.length)]; }
+        function formatTime(ts){ if(!ts)return''; const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+        function escapeHtml(t){ if(!t)return''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 
         init();
     </script>
 </body>
-</html>
+    </html>
