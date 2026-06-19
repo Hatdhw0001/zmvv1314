@@ -355,7 +355,7 @@
 
     <!-- 抽奖参与提示 -->
     <div class="lottery-toast" id="lotteryToast">
-        <h3>🎰 参与抽奖成功！</h3>
+        <h3 id="lotteryTitle">🎰 抽奖</h3>
         <p id="lotteryMsg"></p>
         <button onclick="closeLotteryToast()">知道了</button>
     </div>
@@ -378,10 +378,8 @@
         let allMessages = {};
         let selectedMsgKey = null, selectedMsgData = null;
         const MESSAGES_PER_PAGE = 50;
-
         const BOT_CONFIG_ID = 'bot_txchat';
 
-        // 用户状态
         const userMsgLog = {};
         const userAdWarnCount = {};
         const userMuteUntil = {};
@@ -400,7 +398,6 @@
             console.error('Firebase 初始化失败', e);
         }
 
-        // 获取机器人配置
         async function getRobotConfig() {
             const snapshot = await robotConfigRef.once('value');
             return snapshot.val() || getDefaultConfig();
@@ -409,10 +406,8 @@
         function getDefaultConfig() {
             return {
                 name: 'TxChat小助手', avatar: '#27ae60', enabled: true,
-                welcomeEnabled: true,
-                welcomeMessages: ['欢迎 {user} 加入TxChat！🌍', '嗨 {user}！欢迎 🎉'],
-                dailyWelcomeOnce: true,
-                antiSpamEnabled: true, spamThreshold: 5, spamMuteMinutes: 30,
+                welcomeEnabled: true, welcomeMessages: ['欢迎 {user} 加入TxChat！🌍', '嗨 {user}！欢迎 🎉'],
+                dailyWelcomeOnce: true, antiSpamEnabled: true, spamThreshold: 5, spamMuteMinutes: 30,
                 antiPornEnabled: true, pornMuteMinutes: 60,
                 pornWords: ['裸','骚','淫','色情','成人','激情','一夜情','约炮','小姐'],
                 antiAdEnabled: true, adWarnLimit: 3, adMuteMinutes: 60,
@@ -456,45 +451,68 @@
             }
         }
 
-        // ==================== 抽奖功能 ====================
+        // ==================== 抽奖功能（修复版） ====================
         async function joinLottery() {
-            if (!currentUser) return;
-            
-            const snapshot = await lotteryRef.once('value');
-            const lotteries = snapshot.val() || {};
-            
-            // 查找进行中的抽奖
-            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l.status === 'active');
-            
-            if (activeLotteries.length === 0) {
-                showLotteryToast('当前没有进行中的抽奖活动');
+            if (!currentUser) {
+                console.log('未登录');
                 return;
             }
-
-            const [lotteryKey, lottery] = activeLotteries[0];
             
-            // 检查是否已参与
-            if (lottery.participants && lottery.participants[currentUser.id]) {
-                showLotteryToast('你已经参与过这个抽奖了！🎯');
-                return;
+            console.log('开始参与抽奖...');
+            
+            try {
+                const snapshot = await lotteryRef.once('value');
+                const lotteries = snapshot.val() || {};
+                
+                console.log('所有抽奖数据:', lotteries);
+                
+                // 查找进行中的抽奖
+                const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
+                
+                console.log('进行中的抽奖:', activeLotteries.length);
+                
+                if (activeLotteries.length === 0) {
+                    showLotteryToast('❌', '当前没有进行中的抽奖活动');
+                    return false;
+                }
+
+                // 取第一个进行中的抽奖
+                const [lotteryKey, lottery] = activeLotteries[0];
+                
+                console.log('参与抽奖:', lotteryKey, lottery.title);
+                
+                // 检查是否已参与
+                const participants = lottery.participants || {};
+                if (participants[currentUser.id]) {
+                    showLotteryToast('⚠️', '你已经参与过这个抽奖了！');
+                    return true;
+                }
+
+                // 添加参与记录
+                await lotteryRef.child(lotteryKey).child('participants').child(currentUser.id).set({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    avatar: currentUser.avatar,
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                const participantCount = Object.keys(participants).length + 1;
+                showLotteryToast('✅', `成功参与「${lottery.title}」！\n奖品：${lottery.prize}\n当前参与人数：${participantCount}人`);
+                
+                console.log('参与成功！');
+                return true;
+            } catch (error) {
+                console.error('参与抽奖失败:', error);
+                showLotteryToast('❌', '参与失败，请重试');
+                return false;
             }
-
-            // 添加参与记录
-            await lotteryRef.child(lotteryKey).child('participants').child(currentUser.id).set({
-                id: currentUser.id,
-                name: currentUser.name,
-                avatar: currentUser.avatar,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            const participantCount = Object.keys(lottery.participants || {}).length + 1;
-            showLotteryToast(`✅ 成功参与「${lottery.title}」！\n当前参与人数：${participantCount}人`);
         }
 
-        function showLotteryToast(msg) {
+        function showLotteryToast(title, msg) {
+            document.getElementById('lotteryTitle').textContent = title + ' 抽奖';
             document.getElementById('lotteryMsg').textContent = msg;
             document.getElementById('lotteryToast').classList.add('show');
-            setTimeout(() => closeLotteryToast(), 4000);
+            setTimeout(() => closeLotteryToast(), 5000);
         }
 
         function closeLotteryToast() {
@@ -518,12 +536,10 @@
         async function welcomeUser(username) {
             const config = await getRobotConfig();
             if (!config.welcomeEnabled) return;
-            
             const today = new Date().toDateString();
             const key = currentUser.id + '_' + today;
             if (config.dailyWelcomeOnce && welcomedToday[key]) return;
             welcomedToday[key] = true;
-
             const msgs = config.welcomeMessages || getDefaultConfig().welcomeMessages;
             const msg = msgs[Math.floor(Math.random() * msgs.length)].replace('{user}', username);
             setTimeout(() => sendBotMessage(msg), 800);
@@ -587,7 +603,10 @@
 
         // ==================== 发送消息 ====================
         async function sendMessage() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                console.log('未登录，无法发送消息');
+                return;
+            }
 
             const mutedUntil = userMuteUntil[currentUser.id];
             if (mutedUntil && Date.now() < mutedUntil) {
@@ -599,10 +618,16 @@
             const text = input.value.trim();
             if (!text) return;
 
-            // 检测抽奖参与
+            console.log('发送消息:', text);
+
+            // ===== 检测抽奖参与 =====
             if (text === '#参与抽奖' || text === '#抽奖' || text === '参与抽奖') {
                 input.value = '';
-                await joinLottery();
+                console.log('检测到抽奖指令');
+                const result = await joinLottery();
+                if (!result) {
+                    // 参与失败，不继续处理
+                }
                 return;
             }
 
@@ -650,6 +675,7 @@
             }
 
             // 发送消息
+            console.log('消息通过审核，发送中...');
             messagesRef.push({
                 userId: currentUser.id,
                 userName: currentUser.name,
@@ -886,4 +912,4 @@
         init();
     </script>
 </body>
-    </html>
+</html>
