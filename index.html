@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TX · 聊天室</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --surface: #1a1a1a;
+            --sent: #2b5278;
+            --received: #212121;
+            --text: #ffffff;
+            --secondary: #aaaaaa;
+            --accent: #3a8fd4;
+            --border: #2a2a2a;
+            --hover: #252525;
+            --online: #4caf50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        .app {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--bg);
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%230f0f0f"/></svg>');
+            background-size: cover;
+        }
+
+        /* ========== 登录/注册界面 ========== */
+        .auth-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .auth-screen.hidden { display: none; }
+
+        .auth-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 420px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .auth-card h2 { margin-bottom: 8px; font-size: 24px; }
+        .auth-card p { color: var(--secondary); margin-bottom: 20px; font-size: 14px; }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .auth-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .auth-input:focus { border-color: var(--accent); }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .auth-btn:hover { opacity: 0.9; }
+
+        .auth-error { 
+            color: #e74c3c; 
+            font-size: 13px; 
+            margin-top: 8px; 
+            min-height: 20px; 
+        }
+
+        /* ========== 聊天界面 ========== */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .topbar {
+            padding: 8px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 48px;
+        }
+
+        .room-info h3 { font-size: 15px; font-weight: 600; }
+        .room-info span { font-size: 12px; color: var(--online); }
+
+        .topbar-actions { display: flex; gap: 4px; align-items: center; }
+
+        .icon-btn {
+            background: none; border: none;
+            color: var(--secondary);
+            font-size: 18px; cursor: pointer;
+            padding: 6px; border-radius: 50%;
+            width: 34px; height: 34px;
+            display: flex;
+            align-items: center; justify-content: center;
+        }
+
+        .icon-btn:hover { background: var(--hover); color: white; }
+
+        .user-badge {
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; padding: 4px 10px;
+            border-radius: 16px; background: var(--hover);
+        }
+
+        .user-badge span { font-size: 13px; }
+
+        .avatar-sm {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 12px; color: white;
+        }
+
+        .messages-area {
+            flex: 1; overflow-y: auto;
+            padding: 12px 16px;
+            display: flex; flex-direction: column;
+            gap: 1px;
+        }
+
+        .system-msg {
+            text-align: center; color: var(--secondary);
+            font-size: 12px; padding: 4px 12px; margin: 3px 0;
+            background: rgba(0,0,0,0.4); border-radius: 12px;
+            display: inline-block; align-self: center;
+        }
+
+        .msg-row {
+            display: flex; gap: 6px; max-width: 70%;
+            animation: fadeUp 0.2s ease; margin-bottom: 1px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+
+        .msg-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600; color: white;
+            flex-shrink: 0; align-self: flex-end;
+        }
+
+        .msg-sender {
+            font-size: 11px; font-weight: 600;
+            margin-bottom: 1px; color: var(--accent);
+            padding-left: 4px;
+        }
+
+        .msg-bubble {
+            background: var(--received);
+            padding: 5px 8px;
+            border-radius: 6px 12px 12px 6px;
+            position: relative; word-break: break-word;
+            line-height: 1.35; display: inline-block;
+            max-width: 100%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .msg-row.mine .msg-bubble {
+            background: var(--sent);
+            border-radius: 12px 6px 6px 12px;
+        }
+
+        .msg-text {
+            font-size: 14px; line-height: 1.35;
+            word-break: break-word; padding-right: 42px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            position: absolute; bottom: 4px; right: 7px;
+        }
+
+        .input-bar {
+            padding: 8px 16px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex; gap: 8px; align-items: center;
+        }
+
+        .input-bar input {
+            flex: 1; padding: 10px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px; color: white;
+            font-size: 14px; outline: none;
+        }
+
+        .input-bar input:focus { border-color: var(--accent); }
+
+        .send-btn {
+            background: var(--accent);
+            border: none; color: white;
+            width: 38px; height: 38px;
+            border-radius: 50%; cursor: pointer;
+            font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .send-btn:hover { opacity: 0.9; }
+
+        .online-panel {
+            width: 240px; background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transition: 0.3s;
+        }
+
+        .online-panel.hidden { width: 0; overflow: hidden; border: none; }
+
+        .online-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between;
+            align-items: center; font-weight: 600; font-size: 14px;
+        }
+
+        .online-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+
+        .online-user {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px;
+        }
+
+        .online-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--online); flex-shrink: 0;
+        }
+
+        .online-user span { font-size: 13px; }
+
+        .load-more-btn {
+            display: block;
+            margin: 10px auto;
+            padding: 8px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        @media (max-width: 768px) {
+            .online-panel {
+                position: fixed; right: 0; top: 0;
+                height: 100%; z-index: 50; width: 260px;
+            }
+            .online-panel.hidden { width: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== 登录/注册界面 ==================== -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <h2>🌍 TeleChat</h2>
+            <p>全球聊天室 · 用户名登录</p>
+            
+            <!-- 登录/注册切换 -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">登录</button>
+                <button class="auth-tab" id="registerTab" onclick="switchTab('register')">注册</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <div id="loginForm">
+                <input class="auth-input" type="text" id="loginUsername" placeholder="用户名" autocomplete="off">
+                <input class="auth-input" type="password" id="loginPassword" placeholder="密码" autocomplete="off">
+                <button class="auth-btn" onclick="handleLogin()">登 录</button>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="registerForm" style="display:none;">
+                <input class="auth-input" type="text" id="regUsername" placeholder="设置用户名 (3-15位)" maxlength="15" autocomplete="off">
+                <input class="auth-input" type="password" id="regPassword" placeholder="设置密码 (6位以上)" autocomplete="off">
+                <input class="auth-input" type="password" id="regPassword2" placeholder="确认密码" autocomplete="off">
+                <button class="auth-btn" onclick="handleRegister()">注 册</button>
+            </div>
+
+            <div class="auth-error" id="authError"></div>
+        </div>
+    </div>
+
+    <!-- ==================== 聊天界面 ==================== -->
+    <div class="app" id="mainApp">
+        <div class="chat-container">
+            <div class="topbar">
+                <div class="room-info">
+                    <h3>🌐 公共大厅</h3>
+                    <span id="onlineStatus">在线: 0</span>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-btn" onclick="toggleOnlinePanel()" title="在线用户">
+                        <i class="fas fa-users"></i>
+                    </button>
+                    <div class="user-badge" onclick="handleLogout()" title="退出登录">
+                        <div class="avatar-sm" id="myAvatarSm" style="background:#3a8fd4;">我</div>
+                        <span id="myNameSm">我</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="messages-area" id="messagesArea">
+                <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreMessages()" style="display:none;">
+                    加载更多历史消息
+                </button>
+            </div>
+
+            <div class="input-bar">
+                <input type="text" id="messageInput" placeholder="输入消息... (永久保存)" autocomplete="off">
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="online-panel hidden" id="onlinePanel">
+            <div class="online-header">
+                <span>在线用户</span>
+                <button class="icon-btn" onclick="toggleOnlinePanel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="online-list" id="onlineList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Firebase 配置 ====================
+        // 🔥 请替换为你的 Firebase 配置
+         const firebaseConfig = {
+  apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
+  authDomain: "zmvv2011.firebaseapp.com",
+  projectId: "zmvv2011",
+  storageBucket: "zmvv2011.firebasestorage.app",
+  messagingSenderId: "793178735751",
+  appId: "1:793178735751:web:626cca2b17d34681cce422",
+  measurementId: "G-1ENE8S87JN"
+};
+
+        // 初始化 Firebase
+        let database;
+        let messagesRef;
+        let usersRef;
+        let currentUser = null;
+        let userRef = null;
+        let oldestMessageKey = null;
+        let allMessages = {};
+        const MESSAGES_PER_PAGE = 50;
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            messagesRef = database.ref('messages');
+            usersRef = database.ref('users');
+        } catch (e) {
+            console.error('Firebase 初始化失败');
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 检查本地是否已登录
+            const savedUser = localStorage.getItem('telechat_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                enterChatRoom();
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && currentUser) {
+                    sendMessage();
+                }
+            });
+        }
+
+        // ==================== 登录/注册 ====================
+        function switchTab(tab) {
+            document.getElementById('loginTab').classList.remove('active');
+            document.getElementById('registerTab').classList.remove('active');
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('authError').textContent = '';
+
+            if (tab === 'login') {
+                document.getElementById('loginTab').classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+            } else {
+                document.getElementById('registerTab').classList.add('active');
+                document.getElementById('registerForm').style.display = 'block';
+            }
+        }
+
+        function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const password2 = document.getElementById('regPassword2').value;
+
+            // 验证
+            if (!username || username.length < 3 || username.length > 15) {
+                document.getElementById('authError').textContent = '用户名需要3-15个字符';
+                return;
+            }
+            if (password.length < 6) {
+                document.getElementById('authError').textContent = '密码至少6位';
+                return;
+            }
+            if (password !== password2) {
+                document.getElementById('authError').textContent = '两次密码不一致';
+                return;
+            }
+
+            // 检查用户名是否已存在
+            database.ref('accounts/' + username).once('value').then(function(snapshot) {
+                if (snapshot.exists()) {
+                    document.getElementById('authError').textContent = '用户名已存在，请换一个';
+                    return;
+                }
+
+                // 保存账号信息
+                return database.ref('accounts/' + username).set({
+                    username: username,
+                    password: password,
+                    avatar: randomColor(),
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+            }).then(function() {
+                // 注册成功，自动登录
+                currentUser = {
+                    id: username,
+                    name: username,
+                    avatar: randomColor(),
+                    online: true
+                };
+                
+                localStorage.setItem('telechat_user', JSON.stringify(currentUser));
+                enterChatRoom();
+            }).catch(function(error) {
+                document.getElementById('authError').textContent = '注册失败，请重试';
+                console.error(error);
+            });
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                document.getElementById('authError').textContent = '请输入用户名和密码';
+                return;
+            }
+
+            // 验证账号
+            database.ref('accounts/' + username).once('value').then(function(snapshot) {
+                if (!snapshot.exists()) {
+                    document.getElementById('authError').textContent = '用户不存在，请先注册';
+                    return;
+                }
+
+                const account = snapshot.val();
+                if (account.password !== password) {
+                    document.getElementById('authError').textContent = '密码错误';
+                    return;
+                }
+
+                // 登录成功
+                currentUser = {
+                    id: username,
+                    name: username,
+                    avatar: account.avatar || randomColor(),
+                    online: true
+                };
+
+                localStorage.setItem('telechat_user', JSON.stringify(currentUser));
+                enterChatRoom();
+            }).catch(function(error) {
+                document.getElementById('authError').textContent = '登录失败，请重试';
+                console.error(error);
+            });
+        }
+
+        function handleLogout() {
+            if (currentUser && userRef) {
+                messagesRef.push({
+                    type: 'system',
+                    text: '👋 ' + currentUser.name + ' 离开了聊天室',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                userRef.remove();
+            }
+            
+            currentUser = null;
+            userRef = null;
+            allMessages = {};
+            oldestMessageKey = null;
+            localStorage.removeItem('telechat_user');
+            document.getElementById('messagesArea').innerHTML = '';
+            document.getElementById('authScreen').classList.remove('hidden');
+        }
+
+        // ==================== 聊天室 ====================
+        function enterChatRoom() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('myAvatarSm').style.background = currentUser.avatar;
+            document.getElementById('myAvatarSm').textContent = currentUser.name[0].toUpperCase();
+            document.getElementById('myNameSm').textContent = currentUser.name;
+
+            // 添加到在线用户
+            userRef = usersRef.child(currentUser.id);
+            userRef.set({
+                id: currentUser.id,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+                online: true,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+            userRef.onDisconnect().remove();
+
+            // 发送加入消息
+            messagesRef.push({
+                type: 'system',
+                text: '👋 ' + currentUser.name + ' 加入了聊天室',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // 加载消息
+            loadLatestMessages();
+            listenForNewMessages();
+
+            // 监听在线用户
+            usersRef.on('value', function(snapshot) {
+                const users = snapshot.val() || {};
+                updateOnlineUsers(users);
+            });
+        }
+
+        function loadLatestMessages() {
+            const messagesArea = document.getElementById('messagesArea');
+            messagesArea.innerHTML = '<div style="text-align:center;color:#888;padding:40px;">加载历史消息中...</div>';
+
+            messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value', function(snapshot) {
+                const messages = snapshot.val() || {};
+                allMessages = messages;
+                
+                messagesArea.innerHTML = '';
+                
+                const keys = Object.keys(messages);
+                if (keys.length > 0) {
+                    oldestMessageKey = keys[0];
+                    keys.forEach(key => {
+                        displayMessage(messages[key], false);
+                    });
+                    updateLoadMoreButton(keys.length);
+                } else {
+                    messagesArea.innerHTML = '<div style="text-align:center;color:#888;padding:40px;">暂无消息，发送第一条消息吧！🌍</div>';
+                }
+                
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            });
+        }
+
+        function listenForNewMessages() {
+            messagesRef.limitToLast(1).on('child_added', function(snapshot) {
+                const msg = snapshot.val();
+                const msgKey = snapshot.key;
+                
+                if (!allMessages[msgKey] && currentUser) {
+                    allMessages[msgKey] = msg;
+                    displayMessage(msg, true);
+                    if (!oldestMessageKey) {
+                        oldestMessageKey = msgKey;
+                    }
+                }
+            });
+        }
+
+        function loadMoreMessages() {
+            if (!oldestMessageKey) return;
+            
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            loadMoreBtn.textContent = '加载中...';
+            loadMoreBtn.disabled = true;
+
+            messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE + 1).once('value', function(snapshot) {
+                const messages = snapshot.val() || {};
+                const keys = Object.keys(messages);
+                
+                if (keys.length <= 1) {
+                    loadMoreBtn.textContent = '没有更多消息了';
+                    setTimeout(() => { loadMoreBtn.style.display = 'none'; }, 2000);
+                    return;
+                }
+
+                keys.pop();
+                oldestMessageKey = keys[0];
+                
+                keys.forEach(key => {
+                    if (!allMessages[key]) {
+                        allMessages[key] = messages[key];
+                    }
+                });
+
+                const messagesArea = document.getElementById('messagesArea');
+                messagesArea.innerHTML = '';
+                
+                const allKeys = Object.keys(allMessages).sort();
+                allKeys.forEach(key => {
+                    displayMessage(allMessages[key], false);
+                });
+                
+                updateLoadMoreButton(allKeys.length);
+                loadMoreBtn.textContent = '加载更多历史消息';
+                loadMoreBtn.disabled = false;
+                messagesArea.scrollTop = 100;
+            });
+        }
+
+        function updateLoadMoreButton(messageCount) {
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (messageCount >= MESSAGES_PER_PAGE) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+        function sendMessage() {
+            if (!currentUser) return;
+
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            messagesRef.push({
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userAvatar: currentUser.avatar,
+                text: text,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            input.value = '';
+            input.focus();
+        }
+
+        function displayMessage(msg, scrollToBottom = true) {
+            const area = document.getElementById('messagesArea');
+            if (!area) return;
+
+            if (msg.type === 'system') {
+                area.innerHTML += '<div class="system-msg">' + escapeHtml(msg.text) + '</div>';
+            } else {
+                const isMine = currentUser && msg.userId === currentUser.id;
+                const time = msg.timestamp ? formatTime(msg.timestamp) : '';
+                area.innerHTML += `
+                    <div class="msg-row ${isMine ? 'mine' : ''}">
+                        <div class="msg-avatar" style="background:${msg.userAvatar || '#666'};">
+                            ${(msg.userName || '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                            ${!isMine ? '<div class="msg-sender">' + escapeHtml(msg.userName) + '</div>' : ''}
+                            <div class="msg-bubble">
+                                <div class="msg-text">${escapeHtml(msg.text)}</div>
+                                <div class="msg-time">${time}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            
+            if (scrollToBottom) {
+                area.scrollTop = area.scrollHeight;
+            }
+        }
+
+        function updateOnlineUsers(users) {
+            const list = document.getElementById('onlineList');
+            const count = document.getElementById('onlineStatus');
+            const userArray = Object.values(users);
+            
+            if (list) {
+                list.innerHTML = userArray.map(u => `
+                    <div class="online-user">
+                        <div class="online-dot"></div>
+                        <div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">
+                            ${u.name[0].toUpperCase()}
+                        </div>
+                        <span>${escapeHtml(u.name)} ${u.id === currentUser?.id ? '(你)' : ''}</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (count) {
+                count.textContent = '在线: ' + userArray.length + ' · 全球';
+            }
+        }
+
+        function toggleOnlinePanel() {
+            document.getElementById('onlinePanel').classList.toggle('hidden');
+        }
+
+        // ==================== 工具函数 ====================
+        function randomColor() {
+            const colors = ['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const d = new Date(timestamp);
+            return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
