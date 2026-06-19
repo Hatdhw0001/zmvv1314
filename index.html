@@ -5,879 +5,642 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TxChat · 聊天室</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            width: 100%; height: 100%;
-            overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f; color: #ffffff;
+        :root {
+            --bg: #0f0f0f; --surface: #1a1a1a; --border: #2a2a2a;
+            --text: #ffffff; --text2: #aaaaaa;
+            --accent: #3a8fd4; --danger: #e74c3c; --warning: #f39c12;
+            --success: #27ae60; --gold: #f0c040;
+            --sent: #2b5278; --received: #212121;
         }
-
+        .light-theme {
+            --bg: #f0f2f5; --surface: #ffffff; --border: #ddd;
+            --text: #333; --text2: #666; --received: #e8e8e8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: var(--text);
+        }
         .auth-screen {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.92); backdrop-filter: blur(10px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; padding: 20px;
         }
-
         .auth-screen.hidden { display: none; }
-
         .auth-card {
-            background: #1a1a1a; border-radius: 20px; padding: 32px 24px;
-            width: 100%; max-width: 400px; border: 1px solid #2a2a2a; text-align: center;
+            background: var(--surface); border-radius: 20px; padding: 32px 24px;
+            width: 100%; max-width: 400px; border: 1px solid var(--border); text-align: center;
         }
-
         .auth-card h2 { margin-bottom: 4px; font-size: 22px; }
-        .auth-card p { color: #aaaaaa; margin-bottom: 20px; font-size: 13px; }
-
-        .auth-tabs {
-            display: flex; background: #0f0f0f;
-            border-radius: 12px; padding: 4px; margin-bottom: 20px;
-        }
-
+        .auth-card p { color: var(--text2); margin-bottom: 20px; font-size: 13px; }
+        .auth-tabs { display: flex; background: #0f0f0f; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
         .auth-tab {
-            flex: 1; padding: 10px; border: none;
-            background: transparent; color: #aaaaaa;
-            cursor: pointer; border-radius: 10px;
+            flex: 1; padding: 10px; border: none; background: transparent;
+            color: var(--text2); cursor: pointer; border-radius: 10px;
             font-size: 14px; font-weight: 500; transition: 0.2s;
         }
-
-        .auth-tab.active { background: #3a8fd4; color: white; }
-
+        .auth-tab.active { background: var(--accent); color: white; }
         .auth-input {
-            width: 100%; padding: 14px 16px;
-            background: #0f0f0f; border: 1px solid #2a2a2a;
-            border-radius: 12px; color: white;
+            width: 100%; padding: 14px 16px; background: #0f0f0f;
+            border: 1px solid var(--border); border-radius: 12px; color: white;
             font-size: 15px; margin-bottom: 12px; outline: none;
         }
-
-        .auth-input:focus { border-color: #3a8fd4; }
-
+        .auth-input:focus { border-color: var(--accent); }
         .auth-btn {
-            width: 100%; padding: 14px;
-            background: #3a8fd4; border: none;
-            border-radius: 12px; color: white;
-            font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 4px;
+            width: 100%; padding: 14px; background: var(--accent); border: none;
+            border-radius: 12px; color: white; font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 4px;
         }
-
         .auth-btn:hover { opacity: 0.9; }
-        .auth-error { color: #e74c3c; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .auth-error { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 20px; }
 
         #mainApp {
             display: none; width: 100%; height: 100vh; height: 100dvh;
-            flex-direction: column;
-            background-color: #0f0f0f;
-            background-image: url('bgh.png');
-            background-size: cover; background-repeat: no-repeat;
-            background-position: center; background-attachment: fixed;
+            flex-direction: column; background-color: var(--bg);
+            background-image: url('bgh.png'); background-size: cover;
+            background-repeat: no-repeat; background-position: center;
+            background-attachment: fixed;
         }
-
         #mainApp.active { display: flex; }
 
-        .topbar {
-            flex-shrink: 0; padding: 8px 16px;
-            background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
-            display: flex; align-items: center; justify-content: space-between;
-            min-height: 48px; z-index: 10;
+        .announcement-bar {
+            background: linear-gradient(135deg, #f0c040, #e0a800);
+            color: #000; padding: 6px 16px; text-align: center;
+            font-size: 12px; font-weight: 600; flex-shrink: 0;
+            cursor: pointer; display: none; position: relative;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        .announcement-bar.show { display: block; }
+        .announcement-bar .close-announce {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #000; cursor: pointer; font-size: 14px;
         }
 
+        .topbar {
+            flex-shrink: 0; padding: 8px 16px; background: var(--surface);
+            border-bottom: 1px solid var(--border); display: flex;
+            align-items: center; justify-content: space-between;
+            min-height: 48px; z-index: 10;
+        }
         .room-info h3 { font-size: 15px; font-weight: 600; }
-        .room-info span { font-size: 12px; color: #4caf50; }
-
+        .room-info span { font-size: 12px; color: var(--success); }
         .topbar-actions { display: flex; gap: 4px; align-items: center; }
-
         .icon-btn {
-            background: none; border: none; color: #aaaaaa;
+            background: none; border: none; color: var(--text2);
             font-size: 18px; cursor: pointer; padding: 6px;
             border-radius: 50%; width: 34px; height: 34px;
             display: flex; align-items: center; justify-content: center;
         }
-
         .icon-btn:hover { background: #252525; color: white; }
-
         .user-badge {
             display: flex; align-items: center; gap: 6px;
-            cursor: pointer; padding: 4px 10px;
-            border-radius: 16px; background: #252525;
+            cursor: pointer; padding: 4px 10px; border-radius: 16px;
+            background: #252525;
         }
-
         .user-badge span { font-size: 13px; }
-
         .avatar-sm {
             width: 28px; height: 28px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-weight: 600; font-size: 12px; color: white; flex-shrink: 0;
         }
 
-        .messages-wrapper {
-            flex: 1; overflow-y: auto; padding: 12px 16px;
-            -webkit-overflow-scrolling: touch;
-        }
-
+        .messages-wrapper { flex: 1; overflow-y: auto; padding: 12px 16px; }
         .msg-row {
             display: flex; gap: 6px; max-width: 75%;
             animation: fadeUp 0.2s ease; margin-bottom: 4px;
             align-self: flex-start; position: relative;
-            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
         }
-
         .msg-row.mine { align-self: flex-end; flex-direction: row-reverse; }
         .msg-row.bot { align-self: flex-start; flex-direction: row; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .msg-avatar {
             width: 28px; height: 28px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 12px; font-weight: 600; color: white;
             flex-shrink: 0; align-self: flex-end;
         }
-
         .msg-sender { font-size: 11px; font-weight: 600; margin-bottom: 1px; padding-left: 4px; }
-        .msg-sender.user { color: #3a8fd4; }
-        .msg-sender.bot-sender { color: #27ae60; }
-
+        .msg-sender.user { color: var(--accent); }
+        .msg-sender.bot-sender { color: var(--success); }
         .msg-bubble {
             padding: 6px 10px; border-radius: 6px 12px 12px 6px;
             position: relative; word-break: break-word;
-            line-height: 1.4; display: inline-block;
-            max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            line-height: 1.4; display: inline-block; max-width: 100%;
         }
-
-        .msg-bubble.user-bubble { background: #212121; }
-        .msg-row.mine .msg-bubble { background: #2b5278; border-radius: 12px 6px 6px 12px; }
-        .msg-bubble.bot-bubble { background: #1a2e1a; border: 1px solid #27ae60; border-radius: 6px 12px 12px 6px; }
-        .msg-bubble.warning-bubble { background: #3a2a1a; border: 1px solid #e74c3c; }
-        .msg-bubble.lottery-bubble { background: #1a1a2e; border: 1px solid #f0c040; border-radius: 8px 12px 12px 8px; white-space: pre-line; font-family: 'Courier New', monospace; font-size: 13px; }
-
+        .msg-bubble.user-bubble { background: var(--received); }
+        .msg-row.mine .msg-bubble { background: var(--sent); border-radius: 12px 6px 6px 12px; }
+        .msg-bubble.bot-bubble { background: #1a2e1a; border: 1px solid var(--success); }
+        .msg-bubble.warning-bubble { background: #3a2a1a; border: 1px solid var(--danger); }
+        .msg-bubble.lottery-bubble { background: #1a1a2e; border: 1px solid var(--gold); white-space: pre-line; font-size: 13px; }
+        .msg-bubble.announcement-bubble {
+            background: #2a2010; border: 2px solid var(--gold);
+            border-radius: 8px 12px 12px 8px; white-space: pre-line;
+            font-size: 13px; animation: glow 2s infinite;
+        }
+        @keyframes glow {
+            0%,100% { box-shadow: 0 0 5px rgba(240,192,64,0.3); }
+            50% { box-shadow: 0 0 15px rgba(240,192,64,0.6); }
+        }
         .msg-text { font-size: 14px; line-height: 1.4; word-break: break-word; padding-right: 42px; }
-        .msg-text.lottery-text { padding-right: 8px; font-size: 13px; }
+        .msg-text.lottery-text, .msg-text.announcement-text { padding-right: 8px; font-size: 13px; }
         .msg-time { font-size: 10px; color: rgba(255,255,255,0.4); position: absolute; bottom: 4px; right: 7px; }
 
         .context-menu {
-            position: fixed; background: #1a1a1a;
-            border: 1px solid #2a2a2a; border-radius: 12px;
-            padding: 6px 0; z-index: 200; display: none;
+            position: fixed; background: #1a1a1a; border: 1px solid #2a2a2a;
+            border-radius: 12px; padding: 6px 0; z-index: 200; display: none;
             min-width: 150px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-
         .context-menu.show { display: block; }
-
         .context-menu-item {
-            padding: 12px 20px; cursor: pointer;
-            font-size: 15px; display: flex; align-items: center;
-            gap: 12px; color: #ffffff;
+            padding: 12px 20px; cursor: pointer; font-size: 15px;
+            display: flex; align-items: center; gap: 12px; color: #fff;
         }
-
         .context-menu-item:active { background: #252525; }
-        .context-menu-item i { width: 20px; text-align: center; font-size: 16px; }
-        .context-menu-item.copy { color: #ffffff; }
-        .context-menu-item.recall { color: #f39c12; }
-        .context-menu-item.delete { color: #e74c3c; }
+        .context-menu-item i { width: 20px; text-align: center; }
+        .context-menu-item.copy { color: #fff; }
+        .context-menu-item.recall { color: var(--warning); }
+        .context-menu-item.delete { color: var(--danger); }
 
         .load-more-btn {
             display: block; margin: 10px auto; padding: 8px 20px;
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 20px; color: #3a8fd4; cursor: pointer; font-size: 13px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; color: var(--accent); cursor: pointer; font-size: 13px;
         }
-
         .input-bar {
             flex-shrink: 0; padding: 8px 12px;
             padding-bottom: max(8px, env(safe-area-inset-bottom));
-            background: #1a1a1a; border-top: 1px solid #2a2a2a;
+            background: var(--surface); border-top: 1px solid var(--border);
             display: flex; gap: 8px; align-items: center; z-index: 10;
         }
-
         .input-bar input {
-            flex: 1; padding: 10px 16px;
-            background: #0f0f0f; border: 1px solid #2a2a2a;
-            border-radius: 20px; color: white;
+            flex: 1; padding: 10px 16px; background: #0f0f0f;
+            border: 1px solid var(--border); border-radius: 20px; color: white;
             font-size: 15px; outline: none; min-height: 42px;
         }
-
-        .input-bar input:focus { border-color: #3a8fd4; }
-        .input-bar input::placeholder { color: #666; }
-        .input-bar input.muted { background: #3a1a1a; color: #e74c3c; }
-
+        .input-bar input:focus { border-color: var(--accent); }
+        .input-bar input.muted { background: #3a1a1a; color: var(--danger); }
         .send-btn {
-            background: #3a8fd4; border: none; color: white;
-            width: 42px; height: 42px; border-radius: 50%;
-            cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            background: var(--accent); border: none; color: white;
+            width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            font-size: 16px; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0;
         }
-
         .online-panel {
-            position: fixed; right: 0; top: 0;
-            height: 100%; width: 260px;
-            background: #1a1a1a; border-left: 1px solid #2a2a2a;
-            display: flex; flex-direction: column;
-            transition: 0.3s; z-index: 50; transform: translateX(100%);
+            position: fixed; right: 0; top: 0; height: 100%; width: 260px;
+            background: var(--surface); border-left: 1px solid var(--border);
+            display: flex; flex-direction: column; transition: 0.3s; z-index: 50;
+            transform: translateX(100%);
         }
-
         .online-panel.open { transform: translateX(0); }
-
         .online-header {
-            padding: 12px 14px; border-bottom: 1px solid #2a2a2a;
-            display: flex; justify-content: space-between;
-            align-items: center; font-weight: 600; font-size: 14px; flex-shrink: 0;
+            padding: 12px 14px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 14px;
         }
-
         .online-list { flex: 1; overflow-y: auto; padding: 6px 0; }
-
-        .online-user {
-            display: flex; align-items: center; gap: 8px; padding: 8px 14px;
-        }
-
-        .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; flex-shrink: 0; }
-        .online-dot.muted { background: #e74c3c; }
+        .online-user { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+        .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+        .online-dot.muted { background: var(--danger); }
         .online-user span { font-size: 13px; }
-        .online-user .muted-tag { color: #e74c3c; font-size: 11px; }
-
+        .muted-tag { color: var(--danger); font-size: 11px; }
         .online-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 49; display: none;
         }
-
         .online-overlay.open { display: block; }
-
         .lottery-toast {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #1a1a1a; border: 2px solid #f0c040;
-            border-radius: 16px; padding: 24px;
-            z-index: 300; text-align: center;
-            display: none; min-width: 300px; max-width: 90%;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: #1a1a1a; border: 2px solid var(--gold); border-radius: 16px;
+            padding: 24px; z-index: 300; text-align: center; display: none;
+            min-width: 300px; max-width: 90%;
         }
         .lottery-toast.show { display: block; }
-        .lottery-toast h3 { color: #f0c040; margin-bottom: 12px; font-size: 18px; }
-        .lottery-toast .lottery-info { 
-            text-align: left; color: #ccc; font-size: 13px; 
-            line-height: 1.8; margin-bottom: 16px;
-            background: #0f0f0f; padding: 12px; border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-line;
+        .lottery-toast h3 { color: var(--gold); margin-bottom: 12px; }
+        .lottery-info {
+            text-align: left; color: #ccc; font-size: 12px; line-height: 1.8;
+            margin-bottom: 16px; background: #0f0f0f; padding: 12px;
+            border-radius: 8px; white-space: pre-line; font-family: monospace;
         }
         .lottery-toast button {
-            padding: 10px 30px; background: #f0c040;
-            border: none; border-radius: 20px; color: #000;
-            font-weight: 600; cursor: pointer; font-size: 14px;
-            margin: 4px;
+            padding: 10px 30px; background: var(--gold); border: none;
+            border-radius: 20px; color: #000; font-weight: 600; cursor: pointer; margin: 4px;
         }
-        .lottery-toast button.secondary {
-            background: #333; color: #fff;
-        }
-
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-
         .messages-area { display: flex; flex-direction: column; width: 100%; }
     </style>
 </head>
 <body>
 
-    <div class="auth-screen" id="authScreen">
-        <div class="auth-card">
-            <h2>🌍 TxChat</h2>
-            <p>TX聊天室 · 用户名登录</p>
-            <div class="auth-tabs">
-                <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">登录</button>
-                <button class="auth-tab" id="registerTab" onclick="switchTab('register')">注册</button>
+<div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+        <h2>🌍 TxChat</h2>
+        <p>TX聊天室 · 用户名登录</p>
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">登录</button>
+            <button class="auth-tab" id="registerTab" onclick="switchTab('register')">注册</button>
+        </div>
+        <div id="loginForm">
+            <input class="auth-input" type="text" id="loginUsername" placeholder="用户名" autocomplete="off">
+            <input class="auth-input" type="password" id="loginPassword" placeholder="密码" autocomplete="off">
+            <button class="auth-btn" onclick="handleLogin()">登 录</button>
+        </div>
+        <div id="registerForm" style="display:none;">
+            <input class="auth-input" type="text" id="regUsername" placeholder="用户名 (3-15位)" maxlength="15">
+            <input class="auth-input" type="password" id="regPassword" placeholder="密码 (6位以上)">
+            <input class="auth-input" type="password" id="regPassword2" placeholder="确认密码">
+            <button class="auth-btn" onclick="handleRegister()">注 册</button>
+        </div>
+        <div class="auth-error" id="authError"></div>
+    </div>
+</div>
+
+<div id="mainApp">
+    <div class="announcement-bar" id="announcementBar">
+        <span id="announcementText"></span>
+        <button class="close-announce" onclick="closeAnnouncement()">✕</button>
+    </div>
+    <div class="topbar">
+        <div class="room-info">
+            <h3 id="roomTitle">🌐 聊天大厅</h3>
+            <span id="onlineStatus">在线: 0</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-users"></i></button>
+            <div class="user-badge" onclick="handleLogout()">
+                <div class="avatar-sm" id="myAvatarSm" style="background:#3a8fd4;">我</div>
+                <span id="myNameSm">我</span>
             </div>
-            <div id="loginForm">
-                <input class="auth-input" type="text" id="loginUsername" placeholder="用户名" autocomplete="off">
-                <input class="auth-input" type="password" id="loginPassword" placeholder="密码" autocomplete="off">
-                <button class="auth-btn" onclick="handleLogin()">登 录</button>
-            </div>
-            <div id="registerForm" style="display:none;">
-                <input class="auth-input" type="text" id="regUsername" placeholder="设置用户名 (3-15位)" maxlength="15" autocomplete="off">
-                <input class="auth-input" type="password" id="regPassword" placeholder="设置密码 (6位以上)" autocomplete="off">
-                <input class="auth-input" type="password" id="regPassword2" placeholder="确认密码" autocomplete="off">
-                <button class="auth-btn" onclick="handleRegister()">注 册</button>
-            </div>
-            <div class="auth-error" id="authError"></div>
         </div>
     </div>
-
-    <div id="mainApp">
-        <div class="topbar">
-            <div class="room-info">
-                <h3>🌐 聊天大厅</h3>
-                <span id="onlineStatus">在线: 0</span>
-            </div>
-            <div class="topbar-actions">
-                <button class="icon-btn" onclick="toggleOnlinePanel()" title="在线用户">
-                    <i class="fas fa-users"></i>
-                </button>
-                <div class="user-badge" onclick="handleLogout()" title="退出登录">
-                    <div class="avatar-sm" id="myAvatarSm" style="background:#3a8fd4;">我</div>
-                    <span id="myNameSm">我</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="messages-wrapper" id="messagesWrapper">
-            <div class="messages-area" id="messagesArea">
-                <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreMessages()" style="display:none;">
-                    加载更多历史消息
-                </button>
-            </div>
-        </div>
-
-        <div class="input-bar">
-            <input type="text" id="messageInput" placeholder="输入消息... (发送 #参与抽奖 或 抽奖 查询)" autocomplete="off">
-            <button class="send-btn" onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+    <div class="messages-wrapper" id="messagesWrapper">
+        <div class="messages-area" id="messagesArea">
+            <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreMessages()" style="display:none;">加载更多</button>
         </div>
     </div>
-
-    <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item copy" onclick="copyMessage()"><i class="fas fa-copy"></i> 复制</div>
-        <div class="context-menu-item recall" onclick="recallMessage()"><i class="fas fa-undo"></i> 撤回</div>
-        <div class="context-menu-item delete" onclick="deleteMessage()"><i class="fas fa-trash"></i> 删除</div>
+    <div class="input-bar">
+        <input type="text" id="messageInput" placeholder="输入消息... (#参与抽奖)" autocomplete="off">
+        <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
     </div>
+</div>
 
-    <div class="online-overlay" id="onlineOverlay" onclick="toggleOnlinePanel()"></div>
-    <div class="online-panel" id="onlinePanel">
-        <div class="online-header"><span>在线用户</span><button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-times"></i></button></div>
-        <div class="online-list" id="onlineList"></div>
-    </div>
+<div class="context-menu" id="contextMenu">
+    <div class="context-menu-item copy" onclick="copyMessage()"><i class="fas fa-copy"></i> 复制</div>
+    <div class="context-menu-item recall" onclick="recallMessage()"><i class="fas fa-undo"></i> 撤回</div>
+    <div class="context-menu-item delete" onclick="deleteMessage()"><i class="fas fa-trash"></i> 删除</div>
+</div>
 
-    <div class="lottery-toast" id="lotteryToast">
-        <h3 id="lotteryTitle">🎁 抽奖活动</h3>
-        <div class="lottery-info" id="lotteryInfo"></div>
-        <div id="lotteryActions">
-            <button id="lotteryJoinBtn" onclick="joinLotteryFromToast()">✅ 参与抽奖</button>
-            <button class="secondary" onclick="closeLotteryToast()">关闭</button>
-        </div>
-    </div>
+<div class="online-overlay" id="onlineOverlay" onclick="toggleOnlinePanel()"></div>
+<div class="online-panel" id="onlinePanel">
+    <div class="online-header"><span>在线用户</span><button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-times"></i></button></div>
+    <div class="online-list" id="onlineList"></div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
-            authDomain: "zmvv2011.firebaseapp.com",
-            databaseURL: "https://zmvv2011-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "zmvv2011",
-            storageBucket: "zmvv2011.firebasestorage.app",
-            messagingSenderId: "793178735751",
-            appId: "1:793178735751:web:626cca2b17d34681cce422",
-            measurementId: "G-1ENE8S87JN"
-        };
+<div class="lottery-toast" id="lotteryToast">
+    <h3 id="lotteryTitle">🎁 抽奖</h3>
+    <div class="lottery-info" id="lotteryInfo"></div>
+    <button id="lotteryJoinBtn" onclick="joinLotteryFromToast()">✅ 参与抽奖</button>
+    <button onclick="closeLotteryToast()" style="background:#333;color:#fff;">关闭</button>
+</div>
 
-        let database, messagesRef, usersRef, mutesRef, warnsRef, robotConfigRef, lotteryRef;
-        let currentUser = null, userRef = null;
-        let oldestMessageKey = null;
-        let allMessages = {};
-        let selectedMsgKey = null, selectedMsgData = null;
-        let currentLotteryKey = null;
-        const MESSAGES_PER_PAGE = 50;
-        const BOT_CONFIG_ID = 'bot_txchat';
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
+    authDomain: "zmvv2011.firebaseapp.com",
+    databaseURL: "https://zmvv2011-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "zmvv2011", storageBucket: "zmvv2011.firebasestorage.app",
+    messagingSenderId: "793178735751", appId: "1:793178735751:web:626cca2b17d34681cce422"
+};
 
-        const userMsgLog = {};
-        const userAdWarnCount = {};
-        const userMuteUntil = {};
-        const welcomedToday = {};
+let database, messagesRef, usersRef, mutesRef, warnsRef, robotConfigRef, lotteryRef;
+let announcementsRef, customConfigRef;
+let currentUser=null, userRef=null, oldestMessageKey=null;
+let allMessages={}, selectedMsgKey=null, selectedMsgData=null, currentLotteryKey=null;
+const MESSAGES_PER_PAGE=50, BOT_CONFIG_ID='bot_txchat';
+const userMsgLog={}, userAdWarnCount={}, userMuteUntil={}, welcomedToday={};
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            messagesRef = database.ref('messages');
-            usersRef = database.ref('users');
-            mutesRef = database.ref('mutes');
-            warnsRef = database.ref('warns');
-            robotConfigRef = database.ref('robot_config');
-            lotteryRef = database.ref('lottery');
-        } catch (e) {
-            console.error('Firebase 初始化失败', e);
+try {
+    firebase.initializeApp(firebaseConfig);
+    database=firebase.database();
+    messagesRef=database.ref('messages'); usersRef=database.ref('users');
+    mutesRef=database.ref('mutes'); warnsRef=database.ref('warns');
+    robotConfigRef=database.ref('robot_config'); lotteryRef=database.ref('lottery');
+    announcementsRef=database.ref('announcements'); customConfigRef=database.ref('custom_config');
+} catch(e) { console.error(e); }
+
+async function getRobotConfig() {
+    const s=await robotConfigRef.once('value');
+    return s.val()||{name:'TxChat小助手',avatar:'#27ae60',enabled:true,welcomeEnabled:true,welcomeMessages:['欢迎 {user}！🌍'],dailyWelcomeOnce:true,antiSpamEnabled:true,spamThreshold:5,spamMuteMinutes:30,antiPornEnabled:true,pornMuteMinutes:60,pornWords:['裸','骚','淫','色情'],antiAdEnabled:true,adWarnLimit:3,adMuteMinutes:60,adWords:['加微信','微信号'],blockUrls:true};
+}
+
+function init() {
+    const saved=localStorage.getItem('telechat_user');
+    if(saved){ currentUser=JSON.parse(saved); enterChatRoom(); }
+    document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&currentUser) sendMessage(); });
+    document.addEventListener('click',e=>{
+        const menu=document.getElementById('contextMenu');
+        if(menu.classList.contains('show')&&!menu.contains(e.target)&&!e.target.closest('.msg-row')) closeContextMenu();
+    });
+    if(mutesRef) mutesRef.on('value',s=>{ const m=s.val()||{}; for(const k in m) userMuteUntil[k]=m[k].until; updateMuteUI(); });
+    if(warnsRef) warnsRef.on('value',s=>{ const w=s.val()||{}; for(const k in w) userAdWarnCount[k]=w[k].count||0; });
+}
+
+// ==================== 公告 ====================
+function loadAnnouncements() {
+    announcementsRef.on('value', s => {
+        const announcements = s.val() || {};
+        const keys = Object.keys(announcements);
+        if (keys.length > 0) {
+            const latest = announcements[keys[keys.length - 1]];
+            document.getElementById('announcementText').textContent = '📢 ' + latest.text;
+            document.getElementById('announcementBar').classList.add('show');
         }
+    });
+}
+function closeAnnouncement() {
+    document.getElementById('announcementBar').classList.remove('show');
+}
 
-        async function getRobotConfig() {
-            const snapshot = await robotConfigRef.once('value');
-            return snapshot.val() || getDefaultConfig();
+// ==================== 主题 ====================
+function loadTheme() {
+    customConfigRef.on('value', s => {
+        const config = s.val() || {};
+        if (config.theme === 'light') {
+            document.body.classList.add('light-theme');
+        } else {
+            document.body.classList.remove('light-theme');
         }
-
-        function getDefaultConfig() {
-            return {
-                name: 'TxChat小助手', avatar: '#27ae60', enabled: true,
-                welcomeEnabled: true, welcomeMessages: ['欢迎 {user} 加入TxChat！🌍', '嗨 {user}！欢迎 🎉'],
-                dailyWelcomeOnce: true, antiSpamEnabled: true, spamThreshold: 5, spamMuteMinutes: 30,
-                antiPornEnabled: true, pornMuteMinutes: 60,
-                pornWords: ['裸','骚','淫','色情','成人','激情','一夜情','约炮','小姐'],
-                antiAdEnabled: true, adWarnLimit: 3, adMuteMinutes: 60,
-                adWords: ['加微信','微信号','扫码','赚钱','兼职','代理','加盟','微商','加群','QQ群'],
-                blockUrls: true
-            };
+        if (config.roomName) {
+            document.getElementById('roomTitle').textContent = '🌐 ' + config.roomName;
         }
+    });
+}
 
-        function init() {
-            const savedUser = localStorage.getItem('telechat_user');
-            if (savedUser) { currentUser = JSON.parse(savedUser); enterChatRoom(); }
-            document.addEventListener('keydown', e => { if (e.key === 'Enter' && currentUser) sendMessage(); });
-            document.addEventListener('click', e => {
-                const menu = document.getElementById('contextMenu');
-                if (menu.classList.contains('show') && !menu.contains(e.target) && !e.target.closest('.msg-row')) closeContextMenu();
-            });
-            if (mutesRef) mutesRef.on('value', snapshot => {
-                const mutes = snapshot.val() || {};
-                for (const uid in mutes) userMuteUntil[uid] = mutes[uid].until;
-                updateMuteUI();
-            });
-            if (warnsRef) warnsRef.on('value', snapshot => {
-                const warns = snapshot.val() || {};
-                for (const uid in warns) userAdWarnCount[uid] = warns[uid].count || 0;
-            });
-        }
+// ==================== 抽奖 ====================
+async function joinLottery() {
+    if(!currentUser){ showToast('请先登录'); return false; }
+    const s=await lotteryRef.once('value');
+    const lotteries=s.val()||{};
+    const active=Object.entries(lotteries).filter(([k,l])=>l&&l.status==='active');
+    if(active.length===0){ showToast('📭 暂无进行中的抽奖'); return false; }
+    const [key,lottery]=active[0]; currentLotteryKey=key;
+    const participants=lottery.participants||{};
+    if(participants[currentUser.id]){ showLotteryToast(lottery); showToast('⚠️ 已参与过'); return true; }
+    await lotteryRef.child(key).child('participants').child(currentUser.id).set({
+        id:currentUser.id,name:currentUser.name,avatar:currentUser.avatar,joinedAt:firebase.database.ServerValue.TIMESTAMP
+    });
+    const count=Object.keys(participants).length+1;
+    showToast(`✅ 已参与！当前${count}人`);
+    const us=await lotteryRef.child(key).once('value');
+    showLotteryToast(us.val());
+    return true;
+}
+function joinLotteryFromToast(){ joinLottery().then(()=>{ if(currentLotteryKey) lotteryRef.child(currentLotteryKey).once('value').then(s=>{ if(s.val())showLotteryToast(s.val()); }); }); }
+async function queryLottery(){
+    if(!currentUser)return;
+    const s=await lotteryRef.once('value');
+    const lotteries=s.val()||{};
+    const active=Object.entries(lotteries).filter(([k,l])=>l&&l.status==='active');
+    if(active.length===0){ showToast('📭 暂无抽奖'); return; }
+    showLotteryToast(active[0][1]);
+}
+function showLotteryToast(lottery) {
+    const endDate=new Date(lottery.endTime), startDate=new Date(lottery.startTime||lottery.createdAt);
+    let info=`🎁 ${lottery.title}\n${'─'.repeat(18)}\n已开奖:${lottery.status==='won'?1:0}  未开奖:${lottery.status==='active'?1:0}\n├定时开奖:${endDate.toLocaleString('zh-CN')}\n├参与条件:发送 #参与抽奖\n├参与人数:${Object.keys(lottery.participants||{}).length}人\n├奖品:\n`;
+    (lottery.prizes||[]).forEach(p=>info+=`│  ├ ${p.name} x ${p.count||1}\n`);
+    if(lottery.winners&&lottery.winners.length>0){ info+='├中奖:\n'; lottery.winners.forEach(w=>info+=`│  ├ 🏆 ${w.name}\n`); }
+    document.getElementById('lotteryTitle').textContent='🎁 '+lottery.title;
+    document.getElementById('lotteryInfo').textContent=info;
+    document.getElementById('lotteryJoinBtn').style.display=lottery.status==='active'?'inline-block':'none';
+    document.getElementById('lotteryToast').classList.add('show');
+}
+function closeLotteryToast(){ document.getElementById('lotteryToast').classList.remove('show'); currentLotteryKey=null; }
 
-        // ==================== 抽奖核心 ====================
-        function formatLotteryInfo(lottery) {
-            const now = Date.now();
-            const endTime = lottery.endTime;
-            const startTime = lottery.startTime || lottery.createdAt;
-            const isEnded = lottery.status === 'ended';
-            const isWon = lottery.status === 'won';
-            const winners = lottery.winners || [];
-            const prizes = lottery.prizes || [];
-            const participants = lottery.participants || {};
-            const participantCount = Object.keys(participants).length;
-            const winnerCount = lottery.winnerCount || 1;
+// ==================== 机器人 ====================
+function sendBotMessage(text,type='bot'){
+    getRobotConfig().then(c=>{
+        messagesRef.push({userId:BOT_CONFIG_ID,userName:c.name||'TxChat小助手',userAvatar:c.avatar||'#27ae60',text,timestamp:firebase.database.ServerValue.TIMESTAMP,type});
+    });
+}
+async function welcomeUser(username){
+    const c=await getRobotConfig();
+    if(!c.welcomeEnabled)return;
+    const today=new Date().toDateString(), key=currentUser.id+'_'+today;
+    if(c.dailyWelcomeOnce&&welcomedToday[key])return;
+    welcomedToday[key]=true;
+    const msgs=c.welcomeMessages||['欢迎 {user}！'];
+    setTimeout(()=>sendBotMessage(msgs[Math.floor(Math.random()*msgs.length)].replace('{user}',username)),800);
+}
+function checkSpam(uid,txt){
+    const now=Date.now();
+    if(!userMsgLog[uid])userMsgLog[uid]=[];
+    userMsgLog[uid]=userMsgLog[uid].filter(m=>now-m.time<10000);
+    userMsgLog[uid].push({text:txt,time:now});
+    if(userMsgLog[uid].filter(m=>m.text===txt).length>=5)return{type:'repeat'};
+    if(userMsgLog[uid].filter(m=>now-m.time<3000).length>4)return{type:'fast'};
+    return null;
+}
+async function checkPorn(txt){
+    const c=await getRobotConfig();
+    if(!c.antiPornEnabled)return null;
+    for(const w of(c.pornWords||[])){ if(txt.toLowerCase().includes(w.toLowerCase()))return w; }
+    return null;
+}
+async function checkAd(txt){
+    const c=await getRobotConfig();
+    if(!c.antiAdEnabled)return null;
+    for(const w of(c.adWords||[])){ if(txt.toLowerCase().includes(w.toLowerCase()))return w; }
+    if(c.blockUrls!==false&&/(https?:\/\/|www\.|\.com)/i.test(txt))return'链接';
+    return null;
+}
+function muteUser(uid,name,dur,reason){
+    const until=Date.now()+dur; userMuteUntil[uid]=until;
+    if(mutesRef)mutesRef.child(uid).set({until,reason,mutedAt:firebase.database.ServerValue.TIMESTAMP});
+    const mins=Math.floor(dur/60000);
+    sendBotMessage(`🚫 ${name} 因【${reason}】被禁言${mins>=60?(mins/60)+'小时':mins+'分钟'}`,'warning');
+    delete userMsgLog[uid];
+}
+function updateMuteUI(){
+    const input=document.getElementById('messageInput');
+    if(!input||!currentUser)return;
+    const mu=userMuteUntil[currentUser.id];
+    if(mu&&Date.now()<mu){ input.classList.add('muted'); input.placeholder=`🚫 禁言中 ${Math.ceil((mu-Date.now())/60000)}分钟`; input.disabled=true; }
+    else{ input.classList.remove('muted'); input.placeholder='输入消息... (#参与抽奖)'; input.disabled=false; }
+}
 
-            const endDate = new Date(endTime);
-            const startDate = new Date(startTime);
-            const timeStr = endDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-            const startStr = startDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+// ==================== 发送消息 ====================
+async function sendMessage(){
+    if(!currentUser)return;
+    const mu=userMuteUntil[currentUser.id];
+    if(mu&&Date.now()<mu){ showToast('🚫 已禁言'); return; }
+    const input=document.getElementById('messageInput'), text=input.value.trim();
+    if(!text)return; input.value='';
 
-            let info = '';
-            info += `🎁 ${lottery.title}\n`;
-            info += `──────────────────\n`;
-            info += `已开奖: ${isEnded||isWon ? 1 : 0}  未开奖: ${isEnded||isWon ? 0 : 1}  取消: ${lottery.status==='cancelled' ? 1 : 0}\n`;
-            info += `──────────────────\n`;
-            info += `├活动类型: ${lottery.type || '群抽奖'}\n`;
-            info += `├定时开奖: ${timeStr}  UTC+8\n`;
-            info += `├参与条件: 发送 #参与抽奖\n`;
-            info += `├抽奖开始时间: ${startStr}  UTC+8\n`;
-            info += `├参与人数: ${participantCount} 人\n`;
-            info += `├中奖人数: ${winnerCount} 人\n`;
-            info += `├奖品列表:\n`;
-            prizes.forEach((p, i) => {
-                info += `│  ├ ${p.name} x ${p.count || 1}\n`;
-            });
-            if (winners.length > 0) {
-                info += `├中奖名单:\n`;
-                winners.forEach((w, i) => {
-                    info += `│  ├ 🏆 ${w.name}\n`;
-                });
-            }
-            info += `──────────────────\n`;
-            if (!isEnded && !isWon) {
-                info += `[如何参与？]在群组中发送 #参与抽奖，参与活动。\n`;
-            }
-            info += `发送『抽奖』查询当前群组的抽奖`;
-            return info;
-        }
+    if(text==='#参与抽奖'||text==='参与抽奖'){ await joinLottery(); return; }
+    if(text==='抽奖'||text==='#抽奖'){ await queryLottery(); return; }
 
-        function sendLotteryBotMessage(lottery) {
-            const info = formatLotteryInfo(lottery);
-            messagesRef.push({
-                userId: BOT_CONFIG_ID,
-                userName: 'TxChat小助手',
-                userAvatar: '#27ae60',
-                text: info,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                type: 'lottery'
-            });
-        }
+    const c=await getRobotConfig();
+    if(c.antiPornEnabled&&await checkPorn(text)){ showToast('⚠️ 违规内容'); muteUser(currentUser.id,currentUser.name,(c.pornMuteMinutes||60)*60000,'色情内容'); return; }
+    const ad=await checkAd(text);
+    if(ad){
+        userAdWarnCount[currentUser.id]=(userAdWarnCount[currentUser.id]||0)+1;
+        if(warnsRef)warnsRef.child(currentUser.id).set({count:userAdWarnCount[currentUser.id]});
+        const limit=c.adWarnLimit||3;
+        if(userAdWarnCount[currentUser.id]>=limit){ muteUser(currentUser.id,currentUser.name,(c.adMuteMinutes||60)*60000,'多次广告'); userAdWarnCount[currentUser.id]=0; if(warnsRef)warnsRef.child(currentUser.id).remove(); }
+        else{ showToast(`⚠️ 广告警告 ${userAdWarnCount[currentUser.id]}/${limit}`); sendBotMessage(`⚠️ ${currentUser.name} 广告警告 ${userAdWarnCount[currentUser.id]}/${limit}`,'warning'); }
+        return;
+    }
+    if(c.antiSpamEnabled!==false&&checkSpam(currentUser.id,text)){ showToast('⚠️ 刷屏'); muteUser(currentUser.id,currentUser.name,(c.spamMuteMinutes||30)*60000,'刷屏'); return; }
 
-        function sendWinnersBotMessage(lottery) {
-            const winners = lottery.winners || [];
-            const prizes = lottery.prizes || [];
-            let msg = `🎉 抽奖结果公布！\n`;
-            msg += `🎁 ${lottery.title}\n`;
-            msg += `──────────────────\n`;
-            msg += `中奖名单：\n`;
-            winners.forEach((w, i) => {
-                const prize = prizes[i] || prizes[0];
-                msg += `🏆 ${w.name} - ${prize ? prize.name : '奖品'}\n`;
-            });
-            msg += `──────────────────\n`;
-            msg += `恭喜以上中奖用户！`;
-            
-            messagesRef.push({
-                userId: BOT_CONFIG_ID,
-                userName: 'TxChat小助手',
-                userAvatar: '#27ae60',
-                text: msg,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                type: 'lottery'
-            });
-        }
+    messagesRef.push({userId:currentUser.id,userName:currentUser.name,userAvatar:currentUser.avatar,text,timestamp:firebase.database.ServerValue.TIMESTAMP});
+    input.focus();
+}
 
-        function showLotteryToast(lottery) {
-            const info = formatLotteryInfo(lottery);
-            document.getElementById('lotteryTitle').textContent = '🎁 ' + lottery.title;
-            document.getElementById('lotteryInfo').textContent = info;
-            
-            const isEnded = lottery.status === 'ended' || lottery.status === 'won';
-            const joinBtn = document.getElementById('lotteryJoinBtn');
-            if (joinBtn) {
-                joinBtn.style.display = isEnded ? 'none' : 'inline-block';
-            }
-            
-            document.getElementById('lotteryToast').classList.add('show');
-        }
+// ==================== 长按菜单 ====================
+let lpT,tsX,tsY;
+function setupLongPress(el,key,data){
+    el.oncontextmenu=e=>e.preventDefault();
+    el.addEventListener('touchstart',e=>{ tsX=e.touches[0].clientX; tsY=e.touches[0].clientY; lpT=setTimeout(()=>{ selectedMsgKey=key; selectedMsgData=data; showContextMenu(e.touches[0]); if(navigator.vibrate)navigator.vibrate(15); },600); },{passive:false});
+    el.addEventListener('touchmove',e=>{ if(Math.abs(e.touches[0].clientX-tsX)>10||Math.abs(e.touches[0].clientY-tsY)>10)clearTimeout(lpT); },{passive:false});
+    el.addEventListener('touchend',()=>clearTimeout(lpT));
+    el.addEventListener('touchcancel',()=>clearTimeout(lpT));
+    el.addEventListener('contextmenu',e=>{ e.preventDefault(); selectedMsgKey=key; selectedMsgData=data; showContextMenu(e); });
+}
+function showContextMenu(event){
+    const menu=document.getElementById('contextMenu');
+    const isMine=currentUser&&selectedMsgData&&selectedMsgData.userId===currentUser.id;
+    const isBot=selectedMsgData&&(selectedMsgData.userId===BOT_CONFIG_ID||selectedMsgData.type==='bot'||selectedMsgData.type==='announcement');
+    document.querySelector('.context-menu-item.recall').style.display=(isMine&&!isBot)?'flex':'none';
+    document.querySelector('.context-menu-item.delete').style.display=(isMine&&!isBot)?'flex':'none';
+    const cx=event.clientX||(event.touches?.[0]?.clientX||100),cy=event.clientY||(event.touches?.[0]?.clientY||100);
+    let x=cx,y=cy;
+    if(x+160>innerWidth)x=innerWidth-170; if(y+140>innerHeight)y=innerHeight-150;
+    if(x<10)x=10; if(y<10)y=10;
+    menu.style.left=x+'px'; menu.style.top=y+'px'; menu.classList.add('show');
+}
+function copyMessage(){ if(selectedMsgData?.text&&!selectedMsgData.recalled){ navigator.clipboard.writeText(selectedMsgData.text).then(()=>showToast('✅ 已复制')); } closeContextMenu(); }
+function recallMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能撤回自己的'); closeContextMenu(); return; } if(Date.now()-selectedMsgData.timestamp>120000){ showToast('超2分钟'); closeContextMenu(); return; } messagesRef.child(selectedMsgKey).update({text:'该消息已被撤回',recalled:true}); closeContextMenu(); showToast('✅ 已撤回'); }
+function deleteMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能删除自己的'); closeContextMenu(); return; } if(confirm('删除？')){ messagesRef.child(selectedMsgKey).remove(); closeContextMenu(); showToast('🗑️ 已删除'); }else closeContextMenu(); }
+function closeContextMenu(){ document.getElementById('contextMenu').classList.remove('show'); selectedMsgKey=null; selectedMsgData=null; }
+function showToast(text){
+    let t=document.getElementById('toast');
+    if(!t){ t=document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:white;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;pointer-events:none;'; document.body.appendChild(t); }
+    t.textContent=text; t.style.opacity='1'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',2000);
+}
 
-        function closeLotteryToast() {
-            document.getElementById('lotteryToast').classList.remove('show');
-            currentLotteryKey = null;
-        }
+// ==================== 登录/注册 ====================
+function switchTab(tab){
+    document.getElementById('loginTab').classList.remove('active'); document.getElementById('registerTab').classList.remove('active');
+    document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='none';
+    if(tab==='login'){ document.getElementById('loginTab').classList.add('active'); document.getElementById('loginForm').style.display='block'; }
+    else{ document.getElementById('registerTab').classList.add('active'); document.getElementById('registerForm').style.display='block'; }
+}
+function handleRegister(){
+    const u=document.getElementById('regUsername').value.trim(),p=document.getElementById('regPassword').value,p2=document.getElementById('regPassword2').value;
+    if(!u||u.length<3||u.length>15){ document.getElementById('authError').textContent='用户名3-15字符'; return; }
+    if(p.length<6){ document.getElementById('authError').textContent='密码至少6位'; return; }
+    if(p!==p2){ document.getElementById('authError').textContent='密码不一致'; return; }
+    database.ref('accounts/'+u).once('value').then(s=>{ if(s.exists()){ document.getElementById('authError').textContent='已存在'; return Promise.reject(); } return database.ref('accounts/'+u).set({username:u,password:p,avatar:randomColor(),createdAt:firebase.database.ServerValue.TIMESTAMP}); }).then(()=>{ currentUser={id:u,name:u,avatar:randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); }).catch(()=>{});
+}
+function handleLogin(){
+    const u=document.getElementById('loginUsername').value.trim(),p=document.getElementById('loginPassword').value;
+    if(!u||!p){ document.getElementById('authError').textContent='请输入用户名密码'; return; }
+    database.ref('accounts/'+u).once('value').then(s=>{ if(!s.exists()){ document.getElementById('authError').textContent='用户不存在'; return; } if(s.val().password!==p){ document.getElementById('authError').textContent='密码错误'; return; } currentUser={id:u,name:u,avatar:s.val().avatar||randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); });
+}
+function handleLogout(){
+    if(currentUser&&userRef)userRef.remove();
+    currentUser=null;userRef=null;allMessages={};oldestMessageKey=null;
+    localStorage.removeItem('telechat_user');
+    document.getElementById('messagesArea').innerHTML=''; document.getElementById('mainApp').classList.remove('active');
+    document.getElementById('authScreen').classList.remove('hidden');
+}
+function enterChatRoom(){
+    document.getElementById('authScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('active');
+    document.getElementById('myAvatarSm').style.background=currentUser.avatar; document.getElementById('myAvatarSm').textContent=currentUser.name[0].toUpperCase();
+    document.getElementById('myNameSm').textContent=currentUser.name;
+    userRef=usersRef.child(currentUser.id);
+    userRef.set({id:currentUser.id,name:currentUser.name,avatar:currentUser.avatar,online:true,lastSeen:firebase.database.ServerValue.TIMESTAMP});
+    userRef.onDisconnect().remove();
+    welcomeUser(currentUser.name); updateMuteUI(); loadLatestMessages(); listenForNewMessages();
+    usersRef.on('value',s=>updateOnlineUsers(s.val()||{}));
+    loadAnnouncements(); loadTheme();
+}
 
-        async function queryLottery() {
-            if (!currentUser) return;
-            
-            const snapshot = await lotteryRef.once('value');
-            const lotteries = snapshot.val() || {};
-            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
-            
-            if (activeLotteries.length === 0) {
-                showToast('📭 当前没有进行中的抽奖活动');
-                return;
-            }
+function loadLatestMessages(){
+    const a=document.getElementById('messagesArea'); a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">加载中...</div>';
+    messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value',s=>{
+        const ms=s.val()||{}; allMessages=ms; a.innerHTML=''; const ks=Object.keys(ms);
+        if(ks.length>0){ oldestMessageKey=ks[0]; ks.forEach(k=>displayMessage(ms[k],k,false)); updateLoadMoreButton(ks.length); }
+        else a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
+        scrollToBottom();
+    });
+}
+function listenForNewMessages(){
+    messagesRef.limitToLast(1).on('child_added',s=>{ const m=s.val(),k=s.key; if(!allMessages[k]&&currentUser){ allMessages[k]=m; displayMessage(m,k,true); if(!oldestMessageKey)oldestMessageKey=k; } });
+    messagesRef.on('child_changed',s=>{ allMessages[s.key]=s.val(); refreshMessages(); });
+    messagesRef.on('child_removed',s=>{ delete allMessages[s.key]; refreshMessages(); });
+}
+function refreshMessages(){
+    const a=document.getElementById('messagesArea'); a.innerHTML=''; const ks=Object.keys(allMessages).sort();
+    ks.forEach(k=>displayMessage(allMessages[k],k,false));
+    if(ks.length===0)a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
+    updateLoadMoreButton(ks.length);
+}
+function loadMoreMessages(){
+    if(!oldestMessageKey)return; const b=document.getElementById('loadMoreBtn'); b.textContent='加载中...'; b.disabled=true;
+    messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE+1).once('value',s=>{
+        const ms=s.val()||{},ks=Object.keys(ms);
+        if(ks.length<=1){ b.textContent='没有更多'; setTimeout(()=>b.style.display='none',1500); return; }
+        ks.pop(); oldestMessageKey=ks[0]; ks.forEach(k=>{ if(!allMessages[k])allMessages[k]=ms[k]; });
+        refreshMessages(); b.textContent='加载更多'; b.disabled=false;
+    });
+}
+function updateLoadMoreButton(c){ document.getElementById('loadMoreBtn').style.display=c>=MESSAGES_PER_PAGE?'block':'none'; }
+function displayMessage(msg,key,scroll=true){
+    const a=document.getElementById('messagesArea'); if(!a||msg.type==='system')return;
+    const isMine=currentUser&&msg.userId===currentUser.id;
+    const isBot=msg.type==='bot'||msg.type==='warning'||msg.userId===BOT_CONFIG_ID;
+    const isLottery=msg.type==='lottery';
+    const isAnnouncement=msg.type==='announcement';
+    const time=msg.timestamp?formatTime(msg.timestamp):'';
+    const text=msg.recalled?'<span style="font-style:italic;color:#999;">已撤回</span>':escapeHtml(msg.text);
+    const div=document.createElement('div');
+    if(isMine)div.className='msg-row mine'; else div.className='msg-row bot';
+    div.setAttribute('data-msg-key',key);
+    const senderClass=(isBot||isLottery||isAnnouncement)?'bot-sender':'user';
+    let bubbleClass='user-bubble';
+    if(isAnnouncement)bubbleClass='announcement-bubble';
+    else if(isLottery)bubbleClass='lottery-bubble';
+    else if(msg.type==='warning')bubbleClass='warning-bubble';
+    else if(isBot)bubbleClass='bot-bubble';
+    const avatarContent=(isBot||isLottery||isAnnouncement)?'🤖':(msg.userName||'?')[0].toUpperCase();
+    const textClass=(isLottery||isAnnouncement)?'lottery-text':'';
+    div.innerHTML=`<div class="msg-avatar" style="background:${msg.userAvatar||'#666'};">${avatarContent}</div><div>${!isMine?`<div class="msg-sender ${senderClass}">${escapeHtml(msg.userName)}${(isBot||isLottery||isAnnouncement)?' 🤖':''}</div>`:''}<div class="msg-bubble ${bubbleClass}"><div class="msg-text ${textClass}">${text}</div>${!isLottery&&!isAnnouncement?`<div class="msg-time">${time}</div>`:''}</div></div>`;
+    setupLongPress(div,key,msg);
+    // 公告置顶
+    if(isAnnouncement||msg.pinned){ const first=a.firstChild; if(first)a.insertBefore(div,first); else a.appendChild(div); }
+    else a.appendChild(div);
+    if(scroll)setTimeout(scrollToBottom,50);
+}
+function scrollToBottom(){ const w=document.getElementById('messagesWrapper'); if(w)w.scrollTop=w.scrollHeight; }
+function updateOnlineUsers(users){
+    const l=document.getElementById('onlineList'),c=document.getElementById('onlineStatus'); const arr=Object.values(users);
+    if(l)l.innerHTML=arr.map(u=>{ const m=userMuteUntil[u.id]&&Date.now()<userMuteUntil[u.id]; return`<div class="online-user"><div class="online-dot${m?' muted':''}"></div><div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div><span>${escapeHtml(u.name)}${u.id===currentUser?.id?'(你)':''}</span>${m?'<span class="muted-tag">禁言</span>':''}</div>`; }).join('');
+    if(c)c.textContent='在线: '+arr.length;
+}
+function toggleOnlinePanel(){ document.getElementById('onlinePanel').classList.toggle('open'); document.getElementById('onlineOverlay').classList.toggle('open'); }
+function randomColor(){ const c=['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4']; return c[Math.floor(Math.random()*c.length)]; }
+function formatTime(ts){ if(!ts)return''; const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+function escapeHtml(t){ if(!t)return''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 
-            const [key, lottery] = activeLotteries[0];
-            currentLotteryKey = key;
-            showLotteryToast(lottery);
-        }
-
-        async function joinLottery() {
-            if (!currentUser) { showToast('请先登录'); return false; }
-            
-            const snapshot = await lotteryRef.once('value');
-            const lotteries = snapshot.val() || {};
-            const activeLotteries = Object.entries(lotteries).filter(([k, l]) => l && l.status === 'active');
-            
-            if (activeLotteries.length === 0) {
-                showToast('📭 当前没有进行中的抽奖活动');
-                return false;
-            }
-
-            const [key, lottery] = activeLotteries[0];
-            currentLotteryKey = key;
-            const participants = lottery.participants || {};
-            
-            if (participants[currentUser.id]) {
-                showLotteryToast(lottery);
-                showToast('⚠️ 你已经参与过这个抽奖了');
-                return true;
-            }
-
-            await lotteryRef.child(key).child('participants').child(currentUser.id).set({
-                id: currentUser.id,
-                name: currentUser.name,
-                avatar: currentUser.avatar,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            const count = Object.keys(participants).length + 1;
-            showToast(`✅ 成功参与「${lottery.title}」！当前 ${count} 人参与`);
-            
-            // 更新弹窗信息
-            const updatedSnapshot = await lotteryRef.child(key).once('value');
-            const updatedLottery = updatedSnapshot.val();
-            showLotteryToast(updatedLottery);
-            
-            return true;
-        }
-
-        function joinLotteryFromToast() {
-            joinLottery().then(() => {
-                setTimeout(() => {
-                    if (currentLotteryKey) {
-                        lotteryRef.child(currentLotteryKey).once('value').then(snapshot => {
-                            if (snapshot.val()) showLotteryToast(snapshot.val());
-                        });
-                    }
-                }, 500);
-            });
-        }
-
-        // ==================== 机器人 ====================
-        function sendBotMessage(text, type = 'bot') {
-            getRobotConfig().then(config => {
-                messagesRef.push({
-                    userId: BOT_CONFIG_ID,
-                    userName: config.name || 'TxChat小助手',
-                    userAvatar: config.avatar || '#27ae60',
-                    text: text, timestamp: firebase.database.ServerValue.TIMESTAMP, type: type
-                });
-            });
-        }
-
-        async function welcomeUser(username) {
-            const config = await getRobotConfig();
-            if (!config.welcomeEnabled) return;
-            const today = new Date().toDateString();
-            const key = currentUser.id + '_' + today;
-            if (config.dailyWelcomeOnce && welcomedToday[key]) return;
-            welcomedToday[key] = true;
-            const msgs = config.welcomeMessages || getDefaultConfig().welcomeMessages;
-            const msg = msgs[Math.floor(Math.random() * msgs.length)].replace('{user}', username);
-            setTimeout(() => sendBotMessage(msg), 800);
-        }
-
-        function checkSpam(userId, text) {
-            const now = Date.now();
-            if (!userMsgLog[userId]) userMsgLog[userId] = [];
-            userMsgLog[userId] = userMsgLog[userId].filter(m => now - m.time < 10000);
-            userMsgLog[userId].push({ text, time: now });
-            if (userMsgLog[userId].filter(m => m.text === text).length >= 5) return { type: 'repeat' };
-            if (userMsgLog[userId].filter(m => now - m.time < 3000).length > 4) return { type: 'fast' };
-            return null;
-        }
-
-        async function checkPorn(text) {
-            const config = await getRobotConfig();
-            if (!config.antiPornEnabled) return null;
-            const words = config.pornWords || getDefaultConfig().pornWords;
-            for (const w of words) { if (text.toLowerCase().includes(w.toLowerCase())) return w; }
-            return null;
-        }
-
-        async function checkAd(text) {
-            const config = await getRobotConfig();
-            if (!config.antiAdEnabled) return null;
-            const words = config.adWords || getDefaultConfig().adWords;
-            for (const w of words) { if (text.toLowerCase().includes(w.toLowerCase())) return w; }
-            if (config.blockUrls !== false && /(https?:\/\/|www\.|\.com|\.cn|\.net)/i.test(text)) return '链接';
-            return null;
-        }
-
-        function muteUser(userId, userName, duration, reason) {
-            const until = Date.now() + duration;
-            userMuteUntil[userId] = until;
-            if (mutesRef) mutesRef.child(userId).set({ until, reason, mutedAt: firebase.database.ServerValue.TIMESTAMP });
-            const mins = Math.floor(duration / 60000);
-            sendBotMessage(`🚫 ${userName} 因【${reason}】被禁言${mins>=60?(mins/60)+'小时':mins+'分钟'}`, 'warning');
-            delete userMsgLog[userId];
-        }
-
-        function updateMuteUI() {
-            const input = document.getElementById('messageInput');
-            if (!input || !currentUser) return;
-            const mutedUntil = userMuteUntil[currentUser.id];
-            if (mutedUntil && Date.now() < mutedUntil) {
-                input.classList.add('muted');
-                input.placeholder = `🚫 已禁言，剩余 ${Math.ceil((mutedUntil-Date.now())/60000)} 分钟`;
-                input.disabled = true;
-            } else {
-                input.classList.remove('muted');
-                input.placeholder = '输入消息... (发送 #参与抽奖 或 抽奖 查询)';
-                input.disabled = false;
-            }
-        }
-
-        // ==================== 发送消息 ====================
-        async function sendMessage() {
-            if (!currentUser) return;
-            const mutedUntil = userMuteUntil[currentUser.id];
-            if (mutedUntil && Date.now() < mutedUntil) { showToast(`🚫 已禁言`); return; }
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            if (!text) return;
-            input.value = '';
-
-            // 抽奖指令
-            if (text === '#参与抽奖' || text === '参与抽奖') {
-                await joinLottery();
-                return;
-            }
-            if (text === '抽奖' || text === '#抽奖' || text === '查询抽奖') {
-                await queryLottery();
-                return;
-            }
-
-            const config = await getRobotConfig();
-
-            if (config.antiPornEnabled && await checkPorn(text)) {
-                showToast('⚠️ 消息包含违规内容');
-                muteUser(currentUser.id, currentUser.name, (config.pornMuteMinutes||60)*60000, '发送色情内容');
-                return;
-            }
-
-            const adWord = await checkAd(text);
-            if (adWord) {
-                userAdWarnCount[currentUser.id] = (userAdWarnCount[currentUser.id]||0) + 1;
-                if (warnsRef) warnsRef.child(currentUser.id).set({ count: userAdWarnCount[currentUser.id], lastWarn: firebase.database.ServerValue.TIMESTAMP });
-                const limit = config.adWarnLimit || 3;
-                if (userAdWarnCount[currentUser.id] >= limit) {
-                    muteUser(currentUser.id, currentUser.name, (config.adMuteMinutes||60)*60000, '多次发送广告');
-                    userAdWarnCount[currentUser.id] = 0;
-                    if (warnsRef) warnsRef.child(currentUser.id).remove();
-                } else {
-                    showToast(`⚠️ 请勿发送广告！${userAdWarnCount[currentUser.id]}/${limit}`);
-                    sendBotMessage(`⚠️ ${currentUser.name} 请勿发送广告！${userAdWarnCount[currentUser.id]}/${limit}`, 'warning');
-                }
-                return;
-            }
-
-            if (config.antiSpamEnabled !== false && checkSpam(currentUser.id, text)) {
-                showToast('⚠️ 发送过快');
-                muteUser(currentUser.id, currentUser.name, (config.spamMuteMinutes||30)*60000, '刷屏');
-                return;
-            }
-
-            messagesRef.push({
-                userId: currentUser.id, userName: currentUser.name,
-                userAvatar: currentUser.avatar, text: text,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            input.focus();
-        }
-
-        // ==================== 长按菜单 ====================
-        let longPressTimer, touchStartY, touchStartX;
-        function setupLongPress(el, msgKey, msgData) {
-            el.oncontextmenu = e => e.preventDefault();
-            el.addEventListener('touchstart', e => {
-                touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
-                longPressTimer = setTimeout(() => { selectedMsgKey=msgKey; selectedMsgData=msgData; showContextMenu(e.touches[0]); if(navigator.vibrate)navigator.vibrate(15); }, 600);
-            }, { passive: false });
-            el.addEventListener('touchmove', e => { if(Math.abs(e.touches[0].clientX-touchStartX)>10||Math.abs(e.touches[0].clientY-touchStartY)>10)clearTimeout(longPressTimer); }, { passive: false });
-            el.addEventListener('touchend', ()=>clearTimeout(longPressTimer));
-            el.addEventListener('touchcancel', ()=>clearTimeout(longPressTimer));
-            el.addEventListener('contextmenu', e => { e.preventDefault(); selectedMsgKey=msgKey; selectedMsgData=msgData; showContextMenu(e); });
-        }
-        function showContextMenu(event) {
-            const menu=document.getElementById('contextMenu');
-            const isMine=currentUser&&selectedMsgData&&selectedMsgData.userId===currentUser.id;
-            const isBot=selectedMsgData&&(selectedMsgData.type==='bot'||selectedMsgData.userId===BOT_CONFIG_ID);
-            document.querySelector('.context-menu-item.recall').style.display=(isMine&&!isBot)?'flex':'none';
-            document.querySelector('.context-menu-item.delete').style.display=(isMine&&!isBot)?'flex':'none';
-            const cx=event.clientX||(event.touches?.[0]?.clientX||100), cy=event.clientY||(event.touches?.[0]?.clientY||100);
-            let x=cx,y=cy;
-            if(x+160>innerWidth)x=innerWidth-170; if(y+140>innerHeight)y=innerHeight-150;
-            if(x<10)x=10; if(y<10)y=10;
-            menu.style.left=x+'px'; menu.style.top=y+'px'; menu.classList.add('show');
-        }
-        function copyMessage(){ if(selectedMsgData?.text&&!selectedMsgData.recalled){ navigator.clipboard.writeText(selectedMsgData.text).then(()=>showToast('✅ 已复制')).catch(()=>showToast('复制失败')); } closeContextMenu(); }
-        function recallMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能撤回自己的消息'); closeContextMenu(); return; } if(Date.now()-selectedMsgData.timestamp>120000){ showToast('超过2分钟'); closeContextMenu(); return; } messagesRef.child(selectedMsgKey).update({text:'该消息已被撤回',recalled:true}); closeContextMenu(); showToast('✅ 已撤回'); }
-        function deleteMessage(){ if(!selectedMsgKey||!currentUser||selectedMsgData.userId!==currentUser.id){ showToast('只能删除自己的消息'); closeContextMenu(); return; } if(confirm('确定删除？')){ messagesRef.child(selectedMsgKey).remove(); closeContextMenu(); showToast('🗑️ 已删除'); } else closeContextMenu(); }
-        function closeContextMenu(){ document.getElementById('contextMenu').classList.remove('show'); selectedMsgKey=null; selectedMsgData=null; }
-
-        function showToast(text) {
-            let toast=document.getElementById('toast');
-            if(!toast){ toast=document.createElement('div'); toast.id='toast'; toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:white;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;'; document.body.appendChild(toast); }
-            toast.textContent=text; toast.style.opacity='1'; clearTimeout(toast._timeout); toast._timeout=setTimeout(()=>toast.style.opacity='0',2000);
-        }
-
-        // ==================== 登录/注册 ====================
-        function switchTab(tab) {
-            document.getElementById('loginTab').classList.remove('active'); document.getElementById('registerTab').classList.remove('active');
-            document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='none';
-            document.getElementById('authError').textContent='';
-            if(tab==='login'){ document.getElementById('loginTab').classList.add('active'); document.getElementById('loginForm').style.display='block'; }
-            else{ document.getElementById('registerTab').classList.add('active'); document.getElementById('registerForm').style.display='block'; }
-        }
-        function handleRegister() {
-            const u=document.getElementById('regUsername').value.trim(), p=document.getElementById('regPassword').value, p2=document.getElementById('regPassword2').value;
-            if(!u||u.length<3||u.length>15){ document.getElementById('authError').textContent='用户名3-15字符'; return; }
-            if(p.length<6){ document.getElementById('authError').textContent='密码至少6位'; return; }
-            if(p!==p2){ document.getElementById('authError').textContent='两次密码不一致'; return; }
-            database.ref('accounts/'+u).once('value').then(s=>{ if(s.exists()){ document.getElementById('authError').textContent='用户名已存在'; return Promise.reject(); } return database.ref('accounts/'+u).set({username:u,password:p,avatar:randomColor(),createdAt:firebase.database.ServerValue.TIMESTAMP}); }).then(()=>{ currentUser={id:u,name:u,avatar:randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); }).catch(()=>{});
-        }
-        function handleLogin() {
-            const u=document.getElementById('loginUsername').value.trim(), p=document.getElementById('loginPassword').value;
-            if(!u||!p){ document.getElementById('authError').textContent='请输入用户名和密码'; return; }
-            database.ref('accounts/'+u).once('value').then(s=>{ if(!s.exists()){ document.getElementById('authError').textContent='用户不存在'; return; } if(s.val().password!==p){ document.getElementById('authError').textContent='密码错误'; return; } currentUser={id:u,name:u,avatar:s.val().avatar||randomColor(),online:true}; localStorage.setItem('telechat_user',JSON.stringify(currentUser)); enterChatRoom(); });
-        }
-        function handleLogout() {
-            if(currentUser&&userRef)userRef.remove();
-            currentUser=null;userRef=null;allMessages={};oldestMessageKey=null;
-            localStorage.removeItem('telechat_user');
-            document.getElementById('messagesArea').innerHTML=''; document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('messageInput').disabled=false; document.getElementById('messageInput').classList.remove('muted');
-        }
-        function enterChatRoom() {
-            document.getElementById('authScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('active');
-            document.getElementById('myAvatarSm').style.background=currentUser.avatar; document.getElementById('myAvatarSm').textContent=currentUser.name[0].toUpperCase();
-            document.getElementById('myNameSm').textContent=currentUser.name;
-            userRef=usersRef.child(currentUser.id);
-            userRef.set({id:currentUser.id,name:currentUser.name,avatar:currentUser.avatar,online:true,lastSeen:firebase.database.ServerValue.TIMESTAMP});
-            userRef.onDisconnect().remove();
-            welcomeUser(currentUser.name); updateMuteUI(); loadLatestMessages(); listenForNewMessages();
-            usersRef.on('value',s=>updateOnlineUsers(s.val()||{}));
-        }
-        function loadLatestMessages() {
-            const a=document.getElementById('messagesArea'); a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">加载中...</div>';
-            messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value',s=>{
-                const ms=s.val()||{}; allMessages=ms; a.innerHTML=''; const ks=Object.keys(ms);
-                if(ks.length>0){ oldestMessageKey=ks[0]; ks.forEach(k=>displayMessage(ms[k],k,false)); updateLoadMoreButton(ks.length); }
-                else a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
-                scrollToBottom();
-            });
-        }
-        function listenForNewMessages() {
-            messagesRef.limitToLast(1).on('child_added',s=>{ const m=s.val(),k=s.key; if(!allMessages[k]&&currentUser){ allMessages[k]=m; displayMessage(m,k,true); if(!oldestMessageKey)oldestMessageKey=k; } });
-            messagesRef.on('child_changed',s=>{ allMessages[s.key]=s.val(); refreshMessages(); });
-            messagesRef.on('child_removed',s=>{ delete allMessages[s.key]; refreshMessages(); });
-        }
-        function refreshMessages() {
-            const a=document.getElementById('messagesArea'); a.innerHTML=''; const ks=Object.keys(allMessages).sort();
-            ks.forEach(k=>displayMessage(allMessages[k],k,false));
-            if(ks.length===0)a.innerHTML='<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
-            updateLoadMoreButton(ks.length);
-        }
-        function loadMoreMessages() {
-            if(!oldestMessageKey)return; const b=document.getElementById('loadMoreBtn'); b.textContent='加载中...'; b.disabled=true;
-            messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE+1).once('value',s=>{
-                const ms=s.val()||{}, ks=Object.keys(ms);
-                if(ks.length<=1){ b.textContent='没有更多'; setTimeout(()=>b.style.display='none',1500); return; }
-                ks.pop(); oldestMessageKey=ks[0]; ks.forEach(k=>{ if(!allMessages[k])allMessages[k]=ms[k]; });
-                refreshMessages(); b.textContent='加载更多'; b.disabled=false;
-            });
-        }
-        function updateLoadMoreButton(c){ document.getElementById('loadMoreBtn').style.display=c>=MESSAGES_PER_PAGE?'block':'none'; }
-        function displayMessage(msg, key, scroll=true) {
-            const a=document.getElementById('messagesArea'); if(!a||msg.type==='system')return;
-            const isMine=currentUser&&msg.userId===currentUser.id;
-            const isBot=msg.type==='bot'||msg.type==='warning'||msg.userId===BOT_CONFIG_ID;
-            const isLottery=msg.type==='lottery';
-            const time=msg.timestamp?formatTime(msg.timestamp):'';
-            const text=msg.recalled?'<span style="font-style:italic;color:#999;">该消息已被撤回</span>':escapeHtml(msg.text);
-            const div=document.createElement('div');
-            if(isMine)div.className='msg-row mine'; else if(isBot||isLottery)div.className='msg-row bot'; else div.className='msg-row';
-            div.setAttribute('data-msg-key',key);
-            const senderClass=(isBot||isLottery)?'bot-sender':'user';
-            const bubbleClass=isLottery?'lottery-bubble':(msg.type==='warning'?'warning-bubble':(isBot?'bot-bubble':'user-bubble'));
-            const avatarContent=(isBot||isLottery)?'🤖':(msg.userName||'?')[0].toUpperCase();
-            const textClass=isLottery?'lottery-text':'';
-            div.innerHTML=`<div class="msg-avatar" style="background:${msg.userAvatar||'#666'};">${avatarContent}</div><div>${!isMine?`<div class="msg-sender ${senderClass}">${escapeHtml(msg.userName)}${(isBot||isLottery)?' 🤖':''}</div>`:''}<div class="msg-bubble ${bubbleClass}"><div class="msg-text ${textClass}">${text}</div>${!isLottery?`<div class="msg-time">${time}</div>`:''}</div></div>`;
-            setupLongPress(div,key,msg); a.appendChild(div);
-            if(scroll)setTimeout(scrollToBottom,50);
-        }
-        function scrollToBottom(){ const w=document.getElementById('messagesWrapper'); if(w)w.scrollTop=w.scrollHeight; }
-        function updateOnlineUsers(users) {
-            const l=document.getElementById('onlineList'),c=document.getElementById('onlineStatus'); const a=Object.values(users);
-            if(l)l.innerHTML=a.map(u=>{ const m=userMuteUntil[u.id]&&Date.now()<userMuteUntil[u.id]; return`<div class="online-user"><div class="online-dot${m?' muted':''}"></div><div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div><span>${escapeHtml(u.name)}${u.id===currentUser?.id?'(你)':''}</span>${m?'<span class="muted-tag">禁言</span>':''}</div>`; }).join('');
-            if(c)c.textContent='在线: '+a.length+' · 全球';
-        }
-        function toggleOnlinePanel(){ document.getElementById('onlinePanel').classList.toggle('open'); document.getElementById('onlineOverlay').classList.toggle('open'); }
-        function randomColor(){ const c=['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4']; return c[Math.floor(Math.random()*c.length)]; }
-        function formatTime(ts){ if(!ts)return''; const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(t){ if(!t)return''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
-
-        init();
-    </script>
+init();
+</script>
 </body>
-    </html>
+        </html>
