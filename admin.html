@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TxChat · 后台管理</title>
+    <title>TxChat · 超级后台管理</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
             --accent: #3a8fd4; --danger: #e74c3c; --warning: #f39c12;
             --success: #27ae60; --gold: #f0c040; --text: #e0e0e0; --text2: #888;
+        }
+        .light-theme {
+            --bg: #f5f5f5; --surface: #ffffff; --border: #ddd;
+            --text: #333; --text2: #666;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -19,6 +24,7 @@
             background: var(--bg); color: var(--text);
             width: 100%; height: 100vh; overflow: hidden;
         }
+
         .login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999;
@@ -32,7 +38,7 @@
         .login-card input {
             width: 100%; padding: 14px; background: var(--bg);
             border: 1px solid var(--border); border-radius: 10px;
-            color: white; font-size: 15px; margin-bottom: 12px; outline: none;
+            color: var(--text); font-size: 15px; margin-bottom: 12px; outline: none;
         }
         .login-card button {
             width: 100%; padding: 14px; background: var(--accent);
@@ -40,61 +46,86 @@
         }
         .admin-container { display: flex; width: 100%; height: 100vh; }
         .sidebar {
-            width: 220px; background: var(--surface); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; flex-shrink: 0;
+            width: 230px; background: var(--surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
         }
         .sidebar-header { padding: 20px 16px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 700; text-align: center; }
-        .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+        .sidebar-nav { flex: 1; padding: 10px 0; }
         .nav-item {
-            padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px;
-            font-size: 14px; color: var(--text2); border-left: 3px solid transparent; transition: 0.2s;
+            padding: 11px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            font-size: 13px; color: var(--text2); border-left: 3px solid transparent; transition: 0.2s;
         }
         .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
         .nav-item.active { background: rgba(58,143,212,0.1); color: var(--accent); border-left-color: var(--accent); }
+        .nav-item i { width: 18px; text-align: center; }
         .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
-        .logout-btn { width: 100%; padding: 10px; background: var(--danger); border: none; border-radius: 8px; color: white; cursor: pointer; }
+        .logout-btn { width: 100%; padding: 10px; background: var(--danger); border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 13px; }
+
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .content-header {
-            padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
-            font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+            font-size: 17px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;
         }
         .content-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
-        .stat-value { font-size: 28px; font-weight: 700; }
-        .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
-        .table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
-        .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: var(--bg); padding: 10px 12px; text-align: left; color: var(--text2); font-size: 11px; border-bottom: 1px solid var(--border); }
-        td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; }
+        .stat-value { font-size: 26px; font-weight: 700; }
+        .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+        .chart-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .chart-container canvas { max-height: 250px; }
+
+        .table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+        .table-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: var(--bg); padding: 9px 10px; text-align: left; color: var(--text2); font-size: 11px; border-bottom: 1px solid var(--border); }
+        td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
         .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
         .badge-success { background: rgba(39,174,96,0.2); color: var(--success); }
         .badge-danger { background: rgba(231,76,60,0.2); color: var(--danger); }
         .badge-warning { background: rgba(243,156,18,0.2); color: var(--warning); }
         .badge-gold { background: rgba(240,192,64,0.2); color: var(--gold); }
+        .badge-vip { background: rgba(240,192,64,0.3); color: #ffd700; }
+
         .action-btn {
             padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
-            background: transparent; color: var(--text); cursor: pointer; font-size: 11px; margin: 1px;
+            background: transparent; color: var(--text); cursor: pointer; font-size: 11px; margin: 1px; transition: 0.2s;
         }
+        .action-btn:hover { background: var(--border); }
         .action-btn.gold { color: var(--gold); border-color: var(--gold); }
         .action-btn.danger { color: var(--danger); border-color: var(--danger); }
         .action-btn.success { color: var(--success); border-color: var(--success); }
-        .form-group { margin-bottom: 14px; }
+        .action-btn.warning { color: var(--warning); border-color: var(--warning); }
+        .action-btn.accent { color: var(--accent); border-color: var(--accent); }
+
+        .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 12px; color: var(--text2); }
-        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 13px; outline: none; }
-        .form-group input:focus { border-color: var(--accent); }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-        .prize-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-        .prize-row input { flex: 1; }
-        .lottery-card {
-            background: var(--surface); border: 1px solid var(--gold); border-radius: 12px;
-            padding: 20px; margin-bottom: 12px;
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 9px 11px; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-size: 13px; outline: none; font-family: inherit;
         }
+        .form-group textarea { min-height: 60px; resize: vertical; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 24px; transition: 0.3s; }
+        .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+        input:checked + .toggle-slider { background: var(--success); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+        .log-entry { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text2); }
+        .log-entry span { color: var(--text); }
+
+        .lottery-card { background: var(--surface); border: 1px solid var(--gold); border-radius: 12px; padding: 18px; margin-bottom: 10px; }
         .lottery-card h3 { color: var(--gold); }
+        .prize-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .prize-row input { flex: 1; }
+
         @media (max-width: 768px) {
             .sidebar { width: 50px; }
             .sidebar .nav-item span, .sidebar-header span { display: none; }
@@ -106,29 +137,33 @@
 
 <div class="login-screen" id="loginScreen">
     <div class="login-card">
-        <h2>🛡️ 后台管理</h2>
+        <h2>🛡️ 超级后台</h2>
         <input type="password" id="adminPassword" placeholder="管理密码" autocomplete="off">
         <button onclick="handleAdminLogin()">登 录</button>
-        <p style="margin-top:12px;font-size:11px;color:var(--text2);">默认密码: admin123</p>
+        <p style="margin-top:12px;font-size:11px;color:var(--text2);">默认: admin123</p>
     </div>
 </div>
 
 <div class="admin-container" id="adminPanel" style="display:none;">
     <div class="sidebar">
-        <div class="sidebar-header"><span>TxChat 管理</span></div>
+        <div class="sidebar-header"><span>TxChat 超级后台</span></div>
         <div class="sidebar-nav">
             <div class="nav-item active" onclick="switchPage('dashboard',this)"><i class="fas fa-th-large"></i><span>仪表盘</span></div>
+            <div class="nav-item" onclick="switchPage('stats',this)"><i class="fas fa-chart-bar"></i><span>数据统计</span></div>
             <div class="nav-item" onclick="switchPage('users',this)"><i class="fas fa-users"></i><span>用户管理</span></div>
             <div class="nav-item" onclick="switchPage('messages',this)"><i class="fas fa-comments"></i><span>消息管理</span></div>
             <div class="nav-item" onclick="switchPage('mutes',this)"><i class="fas fa-ban"></i><span>禁言管理</span></div>
+            <div class="nav-item" onclick="switchPage('security',this)"><i class="fas fa-shield-alt"></i><span>安全管理</span></div>
             <div class="nav-item" onclick="switchPage('robot',this)"><i class="fas fa-robot"></i><span>机器人</span></div>
             <div class="nav-item" onclick="switchPage('lottery',this)"><i class="fas fa-gift"></i><span>抽奖管理</span></div>
+            <div class="nav-item" onclick="switchPage('notify',this)"><i class="fas fa-bell"></i><span>通知系统</span></div>
+            <div class="nav-item" onclick="switchPage('customize',this)"><i class="fas fa-palette"></i><span>界面定制</span></div>
             <div class="nav-item" onclick="switchPage('settings',this)"><i class="fas fa-cog"></i><span>系统设置</span></div>
         </div>
-        <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()">退出</button></div>
+        <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()">退出登录</button></div>
     </div>
     <div class="content">
-        <div class="content-header"><span id="pageTitle">📊 仪表盘</span></div>
+        <div class="content-header"><span id="pageTitle">📊 仪表盘</span><span style="font-size:12px;color:var(--text2);" id="clock"></span></div>
         <div class="content-body" id="contentBody"></div>
     </div>
 </div>
@@ -138,341 +173,473 @@ const firebaseConfig = {
     apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
     authDomain: "zmvv2011.firebaseapp.com",
     databaseURL: "https://zmvv2011-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "zmvv2011",
-    storageBucket: "zmvv2011.firebasestorage.app",
-    messagingSenderId: "793178735751",
-    appId: "1:793178735751:web:626cca2b17d34681cce422"
+    projectId: "zmvv2011", storageBucket: "zmvv2011.firebasestorage.app",
+    messagingSenderId: "793178735751", appId: "1:793178735751:web:626cca2b17d34681cce422"
 };
 
 const ADMIN_PASSWORD = 'admin123';
 let database, accountsRef, messagesRef, usersRef, mutesRef, warnsRef, robotConfigRef, lotteryRef;
+let ipBlacklistRef, auditLogRef, announcementsRef, customConfigRef, vipRef, notifyRef;
 
 try {
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
-    accountsRef = database.ref('accounts');
-    messagesRef = database.ref('messages');
-    usersRef = database.ref('users');
-    mutesRef = database.ref('mutes');
-    warnsRef = database.ref('warns');
-    robotConfigRef = database.ref('robot_config');
-    lotteryRef = database.ref('lottery');
+    accountsRef = database.ref('accounts'); messagesRef = database.ref('messages');
+    usersRef = database.ref('users'); mutesRef = database.ref('mutes'); warnsRef = database.ref('warns');
+    robotConfigRef = database.ref('robot_config'); lotteryRef = database.ref('lottery');
+    ipBlacklistRef = database.ref('ip_blacklist'); auditLogRef = database.ref('audit_log');
+    announcementsRef = database.ref('announcements'); customConfigRef = database.ref('custom_config');
+    vipRef = database.ref('vip_users'); notifyRef = database.ref('notifications');
 } catch (e) { console.error(e); }
+
+setInterval(() => {
+    document.getElementById('clock').textContent = new Date().toLocaleString('zh-CN');
+}, 1000);
 
 function handleAdminLogin() {
     if (document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('adminPanel').style.display = 'flex';
+        addAuditLog('管理员登录');
         loadDashboard();
     }
 }
 function handleLogout() {
+    addAuditLog('管理员退出');
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('adminPassword').value = '';
 }
 document.getElementById('adminPassword').addEventListener('keydown', e => { if(e.key==='Enter') handleAdminLogin(); });
 
+function addAuditLog(action) {
+    auditLogRef.push({ action, time: Date.now(), ip: 'admin' });
+}
+
 function switchPage(page, el) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active');
-    const titles = { dashboard:'📊 仪表盘', users:'👥 用户管理', messages:'💬 消息管理', mutes:'🚫 禁言管理', robot:'🤖 机器人管理', lottery:'🎰 抽奖管理', settings:'⚙️ 系统设置' };
+    const titles = {
+        dashboard:'📊 仪表盘', stats:'📈 数据统计', users:'👥 用户管理', messages:'💬 消息管理',
+        mutes:'🚫 禁言管理', security:'🔒 安全管理', robot:'🤖 机器人', lottery:'🎰 抽奖管理',
+        notify:'🔔 通知系统', customize:'🎨 界面定制', settings:'⚙️ 系统设置'
+    };
     document.getElementById('pageTitle').textContent = titles[page]||'';
     switch(page) {
         case 'dashboard': loadDashboard(); break;
+        case 'stats': loadStats(); break;
         case 'users': loadUsers(); break;
         case 'messages': loadMessages(); break;
         case 'mutes': loadMutes(); break;
+        case 'security': loadSecurity(); break;
         case 'robot': loadRobotPage(); break;
         case 'lottery': loadLotteryPage(); break;
+        case 'notify': loadNotify(); break;
+        case 'customize': loadCustomize(); break;
         case 'settings': loadSettings(); break;
     }
 }
 
 // ==================== 仪表盘 ====================
-function loadDashboard() {
-    Promise.all([accountsRef.once('value'), messagesRef.once('value'), usersRef.once('value'), mutesRef.once('value'), lotteryRef.once('value')])
-    .then(([a,m,u,mu,l]) => {
-        const tu = Object.keys(a.val()||{}).length, tm = Object.keys(m.val()||{}).length;
-        const ou = Object.keys(u.val()||{}).length, mu2 = Object.keys(mu.val()||{}).length;
-        const al = Object.values(l.val()||{}).filter(x=>x.status==='active').length;
-        document.getElementById('contentBody').innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card"><div class="stat-value">${tu}</div><div class="stat-label">注册用户</div></div>
-                <div class="stat-card"><div class="stat-value">${ou}</div><div class="stat-label">在线用户</div></div>
-                <div class="stat-card"><div class="stat-value">${tm}</div><div class="stat-label">总消息</div></div>
-                <div class="stat-card"><div class="stat-value">${mu2}</div><div class="stat-label">禁言中</div></div>
-                <div class="stat-card"><div class="stat-value" style="color:var(--gold)">${al}</div><div class="stat-label">进行中抽奖</div></div>
-            </div>`;
-    });
-}
-
-// ==================== 用户/消息/禁言（简化） ====================
-function loadUsers() {
-    Promise.all([accountsRef.once('value'), mutesRef.once('value')]).then(([a,mu]) => {
-        const ac = a.val()||{}, mt = mu.val()||{};
-        let h = '<div class="table-container"><table><tr><th>用户名</th><th>禁言</th><th>操作</th></tr>';
-        Object.entries(ac).forEach(([k,v]) => {
-            const muted = mt[k] && mt[k].until > Date.now();
-            h += `<tr><td>${v.username}</td><td>${muted?'<span class="badge badge-danger">是</span>':'<span class="badge badge-success">否</span>'}</td>
-            <td>${muted?`<button class="action-btn success" onclick="unmute('${k}')">解除</button>`:`<button class="action-btn warning" onclick="muteUser('${k}')">禁言</button>`}
-            <button class="action-btn danger" onclick="deleteUser('${k}')">删除</button></td></tr>`;
-        });
-        h += '</table></div>';
-        document.getElementById('contentBody').innerHTML = h;
-    });
-}
-function muteUser(uid) { const m = prompt('禁言多少分钟？','30'); if(m&&m>0){ mutesRef.child(uid).set({until:Date.now()+m*60000,reason:'管理员禁言'}); alert('已禁言'); loadUsers(); } }
-function unmute(uid) { if(confirm('解除禁言？')){ mutesRef.child(uid).remove(); alert('已解除'); loadUsers(); } }
-function deleteUser(uid) { if(confirm('删除用户？')){ accountsRef.child(uid).remove(); usersRef.child(uid).remove(); mutesRef.child(uid).remove(); alert('已删除'); loadUsers(); } }
-
-function loadMessages() {
-    messagesRef.limitToLast(50).once('value').then(s => {
-        const ms = s.val()||{};
-        let h = '<div class="table-container"><table><tr><th>用户</th><th>内容</th><th>操作</th></tr>';
-        Object.keys(ms).reverse().forEach(k => {
-            const m = ms[k];
-            h += `<tr><td>${m.userName||'?'}</td><td>${(m.text||'').substring(0,40)}</td><td><button class="action-btn danger" onclick="delMsg('${k}')">删除</button></td></tr>`;
-        });
-        h += '</table></div>';
-        document.getElementById('contentBody').innerHTML = h;
-    });
-}
-function delMsg(k) { if(confirm('删除消息？')){ messagesRef.child(k).remove(); loadMessages(); } }
-
-function loadMutes() {
-    mutesRef.once('value').then(s => {
-        const mt = s.val()||{};
-        let h = '<div class="table-container"><table><tr><th>用户</th><th>到期</th><th>操作</th></tr>';
-        Object.entries(mt).forEach(([k,v]) => {
-            h += `<tr><td>${k}</td><td>${new Date(v.until).toLocaleString('zh-CN')}</td><td><button class="action-btn success" onclick="unmute('${k}')">解除</button></td></tr>`;
-        });
-        h += '</table></div>';
-        document.getElementById('contentBody').innerHTML = h;
-    });
-}
-
-// ==================== 机器人管理（简化） ====================
-async function loadRobotPage() {
-    const c = (await robotConfigRef.once('value')).val() || { name:'TxChat小助手', avatar:'#27ae60', enabled:true };
+async function loadDashboard() {
+    const [a,m,u,mu,l] = await Promise.all([
+        accountsRef.once('value'), messagesRef.once('value'), usersRef.once('value'),
+        mutesRef.once('value'), lotteryRef.once('value')
+    ]);
+    const tu = Object.keys(a.val()||{}).length, tm = Object.keys(m.val()||{}).length;
+    const ou = Object.keys(u.val()||{}).length, mu2 = Object.keys(mu.val()||{}).length;
+    const al = Object.values(l.val()||{}).filter(x=>x.status==='active').length;
     document.getElementById('contentBody').innerHTML = `
-        <div class="table-container"><div class="table-header">🤖 基本设置</div>
-        <div style="padding:16px;">
-            <div class="grid-2"><div class="form-group"><label>名称</label><input id="rName" value="${c.name||''}"></div><div class="form-group"><label>颜色</label><input type="color" id="rAvatar" value="${c.avatar||'#27ae60'}" style="height:36px;"></div></div>
-            <button class="action-btn success" onclick="saveRobot()" style="padding:10px 20px;">💾 保存</button>
-        </div></div>`;
-}
-async function saveRobot() {
-    await robotConfigRef.set({ name: document.getElementById('rName').value, avatar: document.getElementById('rAvatar').value, enabled: true });
-    alert('✅ 已保存');
-}
-
-// ==================== 🎰 抽奖管理（新版） ====================
-async function loadLotteryPage() {
-    const s = await lotteryRef.once('value');
-    const lotteries = s.val() || {};
-    let html = `<div class="flex-between" style="margin-bottom:16px;"><h3>🎰 抽奖活动</h3><button class="action-btn gold" onclick="showCreateLottery()" style="padding:10px 16px;font-size:13px;">➕ 创建抽奖</button></div>`;
-
-    const active = Object.entries(lotteries).filter(([k,l])=>l.status==='active');
-    const ended = Object.entries(lotteries).filter(([k,l])=>l.status!=='active');
-
-    if (active.length > 0) {
-        html += '<h4 style="color:var(--gold);margin-bottom:8px;">🟢 进行中</h4>';
-        active.forEach(([k,l]) => html += renderLotteryCard(k,l,true));
-    }
-    if (ended.length > 0) {
-        html += '<h4 style="color:var(--text2);margin:16px 0 8px;">🔴 已结束</h4>';
-        ended.forEach(([k,l]) => html += renderLotteryCard(k,l,false));
-    }
-    if (Object.keys(lotteries).length === 0) html += '<div style="text-align:center;color:var(--text2);padding:40px;">暂无抽奖活动</div>';
-
-    document.getElementById('contentBody').innerHTML = html;
-}
-
-function renderLotteryCard(key, lottery, isActive) {
-    const p = lottery.participants || {};
-    const w = lottery.winners || [];
-    const prizes = lottery.prizes || [];
-    const count = Object.keys(p).length;
-    const endTime = new Date(lottery.endTime);
-    const now = Date.now();
-    const left = endTime - now;
-    const timeStr = left <= 0 ? '已到期' : `${Math.floor(left/3600000)}小时${Math.floor((left%3600000)/60000)}分钟`;
-
-    let prizeStr = prizes.map(pr => `${pr.name} x ${pr.count||1}`).join(', ');
-
-    return `
-    <div class="lottery-card">
-        <h3>🎁 ${lottery.title}</h3>
-        <p style="font-size:12px;color:var(--text2);">⏰ ${timeStr} | 👥 ${count}人 | 🎯 ${lottery.winnerCount||1}人中奖</p>
-        <p style="font-size:12px;color:var(--text2);">🏆 奖品: ${prizeStr}</p>
-        ${w.length > 0 ? `<p style="font-size:12px;color:var(--gold);">🎉 中奖: ${w.map(x=>x.name).join(', ')}</p>` : ''}
-        <div style="margin-top:10px;">
-            ${isActive ? `
-                <button class="action-btn gold" onclick="drawNow('${key}')">🎯 立即开奖</button>
-                <button class="action-btn" onclick="broadcastLottery('${key}')">📢 广播</button>
-                <button class="action-btn danger" onclick="cancelLottery('${key}')">取消</button>
-            ` : `<button class="action-btn danger" onclick="deleteLottery('${key}')">删除</button>`}
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value">${tu}</div><div class="stat-label">注册用户</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--success)">${ou}</div><div class="stat-label">在线用户</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--accent)">${tm}</div><div class="stat-label">总消息</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--danger)">${mu2}</div><div class="stat-label">禁言中</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--gold)">${al}</div><div class="stat-label">进行中抽奖</div></div>
         </div>
-    </div>`;
+        <div class="table-container"><div class="table-header">📝 最近操作日志</div><div id="recentLogs" style="padding:12px;">加载中...</div></div>`;
+    auditLogRef.limitToLast(20).once('value').then(s => {
+        const logs = s.val()||{};
+        let h = Object.keys(logs).reverse().map(k => {
+            const l = logs[k];
+            return `<div class="log-entry"><span>${l.action}</span> - ${new Date(l.time).toLocaleString('zh-CN')}</div>`;
+        }).join('');
+        document.getElementById('recentLogs').innerHTML = h || '暂无日志';
+    });
 }
 
-function showCreateLottery() {
-    const h = `
-        <div class="table-container" style="max-width:600px;">
-            <div class="table-header">➕ 创建抽奖</div>
-            <div style="padding:16px;">
-                <div class="form-group"><label>抽奖标题</label><input id="ltTitle" value="TX聊天室 发起了抽奖活动"></div>
-                <div class="grid-2">
-                    <div class="form-group"><label>中奖人数</label><input type="number" id="ltWinCount" value="1" min="1"></div>
-                    <div class="form-group"><label>持续时间(小时)</label><input type="number" id="ltHours" value="24" min="1"></div>
-                </div>
-                <div class="form-group"><label>奖品列表</label>
-                    <div id="prizeList">
-                        <div class="prize-row"><input placeholder="奖品名称" class="prize-name" value="18cny"><input placeholder="数量" type="number" class="prize-count" value="6" min="1" style="width:80px;"></div>
-                    </div>
-                    <button class="action-btn" onclick="addPrize()" style="margin-top:6px;">➕ 添加奖品</button>
-                </div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <button class="action-btn gold" onclick="createLottery()" style="flex:1;padding:12px;">🎰 创建并广播</button>
-                    <button class="action-btn" onclick="loadLotteryPage()" style="flex:1;padding:12px;">取消</button>
-                </div>
+// ==================== 数据统计 ====================
+async function loadStats() {
+    const [m] = await Promise.all([messagesRef.once('value')]);
+    const msgs = m.val()||{};
+    
+    const userMsgCount = {};
+    Object.values(msgs).forEach(msg => {
+        if (msg.userId && msg.userId !== 'bot_txchat') {
+            userMsgCount[msg.userId] = (userMsgCount[msg.userId]||0) + 1;
+        }
+    });
+    const sorted = Object.entries(userMsgCount).sort((a,b) => b[1]-a[1]).slice(0,10);
+
+    const dailyCount = {};
+    Object.values(msgs).forEach(msg => {
+        const d = new Date(msg.timestamp).toLocaleDateString('zh-CN');
+        dailyCount[d] = (dailyCount[d]||0) + 1;
+    });
+    const dates = Object.keys(dailyCount).slice(-14);
+    const counts = dates.map(d => dailyCount[d]);
+
+    document.getElementById('contentBody').innerHTML = `
+        <div class="grid-2">
+            <div class="chart-container">
+                <h4 style="margin-bottom:12px;">📈 消息趋势（近14天）</h4>
+                <canvas id="msgChart"></canvas>
+            </div>
+            <div class="table-container">
+                <div class="table-header">🏆 活跃用户 TOP10</div>
+                <table>${sorted.map(([id,c],i) => `<tr><td>${i+1}</td><td>${id}</td><td>${c} 条</td></tr>`).join('')}</table>
             </div>
         </div>`;
+
+    if (dates.length > 0) {
+        new Chart(document.getElementById('msgChart'), {
+            type: 'line',
+            data: { labels: dates, datasets: [{ label: '消息数', data: counts, borderColor: '#3a8fd4', fill: false }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+}
+
+// ==================== 用户管理 ====================
+async function loadUsers() {
+    const [a, mu, v] = await Promise.all([accountsRef.once('value'), mutesRef.once('value'), vipRef.once('value')]);
+    const ac = a.val()||{}, mt = mu.val()||{}, vip = v.val()||{};
+    let h = '<div class="flex-between"><input class="form-group" style="width:200px;" id="userSearch" placeholder="🔍 搜索..." oninput="filterTable()"><div><button class="action-btn warning" onclick="batchMute()">批量禁言</button><button class="action-btn danger" onclick="batchDelete()">批量删除</button></div></div>';
+    h += '<div class="table-container"><table id="userTable"><tr><th><input type="checkbox" id="selectAll" onchange="toggleAll(this,\'userCb\')"></th><th>用户名</th><th>VIP</th><th>禁言</th><th>操作</th></tr>';
+    Object.entries(ac).forEach(([k,v]) => {
+        const muted = mt[k]&&mt[k].until>Date.now(), isVip = !!vip[k];
+        h += `<tr><td><input type="checkbox" class="userCb" value="${k}"></td><td>${v.username}${isVip?' <span class="badge badge-vip">VIP</span>':''}</td>
+        <td>${isVip?`<button class="action-btn" onclick="setVip('${k}',false)">取消VIP</button>`:`<button class="action-btn gold" onclick="setVip('${k}',true)">设VIP</button>`}</td>
+        <td>${muted?'<span class="badge badge-danger">是</span>':'<span class="badge badge-success">否</span>'}</td>
+        <td>
+            ${muted?`<button class="action-btn success" onclick="unmute('${k}')">解除</button>`:`<button class="action-btn warning" onclick="muteUser('${k}')">禁言</button>`}
+            <button class="action-btn accent" onclick="viewUserDetail('${k}')">详情</button>
+            <button class="action-btn danger" onclick="deleteUser('${k}')">删除</button>
+        </td></tr>`;
+    });
+    h += '</table></div>';
     document.getElementById('contentBody').innerHTML = h;
 }
 
+function filterTable() {
+    const s = document.getElementById('userSearch').value.toLowerCase();
+    document.querySelectorAll('#userTable tr').forEach(r => {
+        if(r.querySelector('td')) r.style.display = r.textContent.toLowerCase().includes(s)?'':'none';
+    });
+}
+function toggleAll(cb, cls) { document.querySelectorAll('.'+cls).forEach(c => c.checked = cb.checked); }
+function batchMute() {
+    const ids = [...document.querySelectorAll('.userCb:checked')].map(c=>c.value);
+    if(ids.length===0) return alert('请选择用户');
+    const m = prompt('禁言多少分钟？','30');
+    if(m&&m>0){ ids.forEach(id=>mutesRef.child(id).set({until:Date.now()+m*60000,reason:'批量禁言'})); alert('已禁言'+ids.length+'人'); loadUsers(); }
+}
+function batchDelete() {
+    const ids = [...document.querySelectorAll('.userCb:checked')].map(c=>c.value);
+    if(ids.length===0) return alert('请选择用户');
+    if(confirm('删除'+ids.length+'个用户？')){ ids.forEach(id=>{ accountsRef.child(id).remove(); usersRef.child(id).remove(); }); alert('已删除'); loadUsers(); }
+}
+async function setVip(uid, status) {
+    if(status) await vipRef.child(uid).set({vip:true, setAt:Date.now()});
+    else await vipRef.child(uid).remove();
+    loadUsers();
+}
+async function viewUserDetail(uid) {
+    const [a, w] = await Promise.all([accountsRef.child(uid).once('value'), warnsRef.child(uid).once('value')]);
+    const user = a.val()||{}, warns = w.val()||{};
+    alert(`用户名: ${user.username}\n注册时间: ${user.createdAt?new Date(user.createdAt).toLocaleString('zh-CN'):'未知'}\n警告次数: ${warns.count||0}`);
+}
+function muteUser(uid) { const m=prompt('禁言分钟','30'); if(m&&m>0){ mutesRef.child(uid).set({until:Date.now()+m*60000,reason:'管理员'}); loadUsers(); } }
+function unmute(uid) { if(confirm('解除？')){ mutesRef.child(uid).remove(); loadUsers(); } }
+function deleteUser(uid) { if(confirm('删除？')){ accountsRef.child(uid).remove(); usersRef.child(uid).remove(); loadUsers(); } }
+
+// ==================== 消息管理 ====================
+async function loadMessages() {
+    const [m, c] = await Promise.all([messagesRef.limitToLast(50).once('value'), customConfigRef.once('value')]);
+    const msgs = m.val()||{}, config = c.val()||{};
+    const reviewMode = config.reviewMode || false;
+    let h = `<div class="flex-between"><span>审核模式: ${reviewMode?'<span class="badge badge-danger">开启</span>':'<span class="badge badge-success">关闭</span>'}</span>
+    <button class="action-btn warning" onclick="toggleReview()">切换审核</button></div>`;
+    h += '<div class="table-container"><table><tr><th>用户</th><th>内容</th><th>审核</th><th>操作</th></tr>';
+    Object.keys(msgs).reverse().forEach(k => {
+        const msg = msgs[k];
+        h += `<tr><td>${msg.userName||'?'}</td><td>${(msg.text||'').substring(0,30)}</td>
+        <td>${msg.approved!==false?'<span class="badge badge-success">✓</span>':'<span class="badge badge-warning">待审</span>'}</td>
+        <td>
+            ${msg.approved===false?`<button class="action-btn success" onclick="approveMsg('${k}')">通过</button>`:''}
+            <button class="action-btn danger" onclick="delMsg('${k}')">删除</button>
+        </td></tr>`;
+    });
+    h += '</table></div>';
+    document.getElementById('contentBody').innerHTML = h;
+}
+async function toggleReview() {
+    const s = await customConfigRef.child('reviewMode').once('value');
+    await customConfigRef.child('reviewMode').set(!s.val());
+    addAuditLog('切换审核模式');
+    loadMessages();
+}
+function approveMsg(k) { messagesRef.child(k).update({approved:true}); loadMessages(); }
+function delMsg(k) { if(confirm('删除？')){ messagesRef.child(k).remove(); loadMessages(); } }
+
+// ==================== 禁言管理 ====================
+async function loadMutes() {
+    const mt = (await mutesRef.once('value')).val()||{};
+    let h = '<div class="table-container"><table><tr><th>用户</th><th>到期</th><th>操作</th></tr>';
+    Object.entries(mt).forEach(([k,v]) => {
+        h += `<tr><td>${k}</td><td>${new Date(v.until).toLocaleString('zh-CN')}</td><td><button class="action-btn success" onclick="unmute('${k}')">解除</button></td></tr>`;
+    });
+    h += '</table></div>';
+    document.getElementById('contentBody').innerHTML = h;
+}
+
+// ==================== 安全管理 ====================
+async function loadSecurity() {
+    const [bl, r] = await Promise.all([ipBlacklistRef.once('value'), robotConfigRef.once('value')]);
+    const blacklist = bl.val()||{}, robotConfig = r.val()||{};
+    document.getElementById('contentBody').innerHTML = `
+        <div class="grid-2">
+            <div class="table-container">
+                <div class="table-header">🚫 IP黑名单 <button class="action-btn danger" onclick="addIp()">➕ 添加</button></div>
+                <table>${Object.entries(blacklist).map(([k,v]) => `<tr><td>${k}</td><td><button class="action-btn danger" onclick="ipBlacklistRef.child('${k}').remove();loadSecurity();">移除</button></td></tr>`).join('')||'<tr><td colspan="2">无</td></tr>'}</table>
+            </div>
+            <div class="table-container">
+                <div class="table-header">🔑 敏感词热更新</div>
+                <div style="padding:12px;">
+                    <div class="form-group"><label>广告词(逗号分隔)</label><textarea id="adWords">${(robotConfig.adWords||[]).join(',')}</textarea></div>
+                    <div class="form-group"><label>色情词(逗号分隔)</label><textarea id="pornWords">${(robotConfig.pornWords||[]).join(',')}</textarea></div>
+                    <button class="action-btn success" onclick="updateSensitive()">💾 更新敏感词</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-container" style="margin-top:12px;">
+            <div class="table-header">📋 操作日志 <button class="action-btn" onclick="auditLogRef.remove();loadSecurity();">清空</button></div>
+            <div id="logArea" style="padding:12px;max-height:300px;overflow-y:auto;"></div>
+        </div>`;
+    auditLogRef.limitToLast(50).once('value').then(s => {
+        const logs = s.val()||{};
+        document.getElementById('logArea').innerHTML = Object.keys(logs).reverse().map(k => {
+            const l = logs[k];
+            return `<div class="log-entry"><span>${l.action}</span> - ${new Date(l.time).toLocaleString('zh-CN')}</div>`;
+        }).join('');
+    });
+}
+function addIp() { const ip=prompt('输入IP'); if(ip){ ipBlacklistRef.child(ip.replace(/\./g,'_')).set({ip,addedAt:Date.now()}); loadSecurity(); } }
+async function updateSensitive() {
+    const cfg = (await robotConfigRef.once('value')).val()||{};
+    cfg.adWords = document.getElementById('adWords').value.split(',').map(w=>w.trim()).filter(w=>w);
+    cfg.pornWords = document.getElementById('pornWords').value.split(',').map(w=>w.trim()).filter(w=>w);
+    await robotConfigRef.set(cfg);
+    addAuditLog('更新敏感词');
+    alert('✅ 已更新');
+}
+
+// ==================== 机器人 ====================
+async function loadRobotPage() {
+    const c = (await robotConfigRef.once('value')).val()||{name:'TxChat小助手',avatar:'#27ae60'};
+    document.getElementById('contentBody').innerHTML = `
+        <div class="table-container"><div class="table-header">🤖 设置</div>
+        <div style="padding:14px;">
+            <div class="grid-2"><div class="form-group"><label>名称</label><input id="rName" value="${c.name||''}"></div><div class="form-group"><label>颜色</label><input type="color" id="rAvatar" value="${c.avatar||'#27ae60'}"></div></div>
+            <button class="action-btn success" onclick="saveRobot()">💾 保存</button>
+        </div></div>`;
+}
+async function saveRobot() {
+    const cfg = (await robotConfigRef.once('value')).val()||{};
+    cfg.name = document.getElementById('rName').value;
+    cfg.avatar = document.getElementById('rAvatar').value;
+    await robotConfigRef.set(cfg);
+    alert('✅ 已保存');
+}
+
+// ==================== 抽奖管理 ====================
+async function loadLotteryPage() {
+    const s = await lotteryRef.once('value');
+    const lotteries = s.val()||{};
+    let h = `<div class="flex-between"><h3>🎰 抽奖</h3><button class="action-btn gold" onclick="showCreateLottery()">➕ 创建</button></div>`;
+    Object.entries(lotteries).forEach(([k,l]) => {
+        const p = l.participants||{}, w = l.winners||[], count = Object.keys(p).length;
+        const active = l.status==='active';
+        h += `<div class="lottery-card"><h3>${l.title}</h3><p>👥${count}人 | 🎯${l.winnerCount||1}人</p>
+        ${w.length>0?`<p>🎉 ${w.map(x=>x.name).join(',')}</p>`:''}
+        ${active?`<button class="action-btn gold" onclick="drawNow('${k}')">开奖</button><button class="action-btn danger" onclick="cancelLottery('${k}')">取消</button>`:`<button class="action-btn danger" onclick="deleteLottery('${k}')">删除</button>`}</div>`;
+    });
+    document.getElementById('contentBody').innerHTML = h;
+}
+function showCreateLottery() {
+    document.getElementById('contentBody').innerHTML = `
+        <div class="table-container" style="max-width:500px;"><div class="table-header">➕ 创建</div><div style="padding:14px;">
+        <div class="form-group"><label>标题</label><input id="ltTitle" value="TX聊天室 发起了抽奖活动"></div>
+        <div class="grid-2"><div class="form-group"><label>中奖人数</label><input type="number" id="ltWin" value="1"></div><div class="form-group"><label>时间(小时)</label><input type="number" id="ltHours" value="24"></div></div>
+        <div class="form-group"><label>奖品</label><div id="prizeList"><div class="prize-row"><input class="pname" placeholder="名称" value="18cny"><input type="number" class="pcnt" value="6" style="width:60px;"></div></div><button class="action-btn" onclick="addPrize()">➕ 添加</button></div>
+        <button class="action-btn gold" onclick="createLottery()" style="padding:10px 20px;">创建并广播</button></div></div>`;
+}
 function addPrize() {
-    const div = document.createElement('div');
-    div.className = 'prize-row';
-    div.innerHTML = `<input placeholder="奖品名称" class="prize-name"><input placeholder="数量" type="number" class="prize-count" value="1" min="1" style="width:80px;"><button class="action-btn danger" onclick="this.parentElement.remove()">✕</button>`;
-    document.getElementById('prizeList').appendChild(div);
+    const d=document.createElement('div'); d.className='prize-row';
+    d.innerHTML=`<input class="pname" placeholder="名称"><input type="number" class="pcnt" value="1" style="width:60px;"><button class="action-btn danger" onclick="this.parentElement.remove()">✕</button>`;
+    document.getElementById('prizeList').appendChild(d);
 }
-
 async function createLottery() {
-    const title = document.getElementById('ltTitle').value || 'TX聊天室 发起了抽奖活动';
-    const winnerCount = parseInt(document.getElementById('ltWinCount').value) || 1;
-    const hours = parseInt(document.getElementById('ltHours').value) || 24;
-
-    const prizes = [];
-    document.querySelectorAll('.prize-row').forEach(row => {
-        const name = row.querySelector('.prize-name').value.trim();
-        const count = parseInt(row.querySelector('.prize-count').value) || 1;
-        if (name) prizes.push({ name, count });
+    const title=document.getElementById('ltTitle').value, wc=parseInt(document.getElementById('ltWin').value)||1;
+    const h=parseInt(document.getElementById('ltHours').value)||24;
+    const prizes=[];
+    document.querySelectorAll('.prize-row').forEach(r=>{
+        const n=r.querySelector('.pname').value.trim(), c=parseInt(r.querySelector('.pcnt').value)||1;
+        if(n)prizes.push({name:n,count:c});
     });
-    if (prizes.length === 0) prizes.push({ name: '奖品', count: 1 });
-
-    const now = Date.now();
-    const lotteryData = {
-        title, type: '群抽奖', winnerCount, prizes,
-        startTime: now,
-        endTime: now + hours * 3600000,
-        createdAt: now,
-        status: 'active',
-        participants: {},
-        winners: []
-    };
-
-    const ref = await lotteryRef.push();
-    await ref.set(lotteryData);
-
-    // 广播到聊天室
-    const info = formatLotteryForChat(lotteryData);
+    const now=Date.now();
+    const ref=await lotteryRef.push();
+    await ref.set({title,type:'群抽奖',winnerCount:wc,prizes,startTime:now,endTime:now+h*3600000,status:'active',participants:{},winners:[]});
+    sendBotMessage(formatLottery(title,prizes,wc,now,now+h*3600000), 'lottery');
+    alert('✅ 已创建并广播'); loadLotteryPage();
+}
+function sendBotMessage(text, type='bot') {
     messagesRef.push({
-        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
-        text: info, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
+        userId:'bot_txchat', userName:'TxChat小助手', userAvatar:'#27ae60',
+        text, timestamp:firebase.database.ServerValue.TIMESTAMP, type
     });
-
-    alert('✅ 抽奖已创建并广播！');
+}
+function formatLottery(t,p,wc,s,e) {
+    let i=`🎁 ${t}\n${'─'.repeat(18)}\n已开奖:0  未开奖:1  取消:0\n${'─'.repeat(18)}\n├活动类型:群抽奖\n├定时开奖:${new Date(e).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}  UTC+8\n├参与条件:发送 #参与抽奖\n├抽奖开始时间:${new Date(s).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}  UTC+8\n├奖品列表:\n`;
+    p.forEach(x=>i+=`│  ├ ${x.name} x ${x.count}\n`);
+    i+=`${'─'.repeat(18)}\n[如何参与？]发送 #参与抽奖\n发送『抽奖』查询抽奖`;
+    return i;
+}
+async function drawNow(k) {
+    const s=await lotteryRef.child(k).once('value'), l=s.val(), p=Object.values(l.participants||{});
+    if(p.length===0)return alert('无参与者');
+    const w=[...p].sort(()=>Math.random()-0.5).slice(0,Math.min(l.winnerCount||1,p.length));
+    await lotteryRef.child(k).update({status:'won',winners:w});
+    let m=`🎉 开奖！\n${l.title}\n中奖:${w.map(x=>x.name).join(',')}`;
+    sendBotMessage(m, 'lottery');
     loadLotteryPage();
 }
+async function cancelLottery(k) { if(confirm('取消？')){ await lotteryRef.child(k).update({status:'cancelled'}); loadLotteryPage(); } }
+async function deleteLottery(k) { if(confirm('删除？')){ await lotteryRef.child(k).remove(); loadLotteryPage(); } }
 
-function formatLotteryForChat(lottery) {
-    const endDate = new Date(lottery.endTime);
-    const startDate = new Date(lottery.startTime || lottery.createdAt);
-    const timeStr = endDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-    const startStr = startDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-    const prizes = lottery.prizes || [];
-
-    let info = `🎁 ${lottery.title}\n`;
-    info += `──────────────────\n`;
-    info += `已开奖: 0  未开奖: 1  取消: 0\n`;
-    info += `──────────────────\n`;
-    info += `├活动类型: 群抽奖\n`;
-    info += `├定时开奖: ${timeStr}  UTC+8\n`;
-    info += `├参与条件: 发送 #参与抽奖\n`;
-    info += `├抽奖开始时间: ${startStr}  UTC+8\n`;
-    info += `├奖品列表:\n`;
-    prizes.forEach(p => { info += `│  ├ ${p.name} x ${p.count || 1}\n`; });
-    info += `──────────────────\n`;
-    info += `[如何参与？]在群组中发送 #参与抽奖，参与活动。\n`;
-    info += `发送『抽奖』查询当前群组的抽奖`;
-    return info;
+// ==================== 通知系统（公告+定时广播） ====================
+async function loadNotify() {
+    const [a, n] = await Promise.all([announcementsRef.once('value'), notifyRef.once('value')]);
+    const announce = a.val()||{}, notifs = n.val()||{};
+    document.getElementById('contentBody').innerHTML = `
+        <div class="grid-2">
+            <div class="table-container">
+                <div class="table-header">📢 全站公告（机器人发送并置顶）<button class="action-btn gold" onclick="addAnnounce()">➕ 发布公告</button></div>
+                <div style="padding:10px;">${Object.entries(announce).map(([k,v])=>`<div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);"><span>📢 ${v.text}</span><span style="font-size:10px;color:var(--text2);">${new Date(v.time).toLocaleString('zh-CN')}</span><button class="action-btn danger" onclick="announcementsRef.child('${k}').remove();loadNotify();">删除</button></div>`).join('')||'<div style="color:var(--text2);padding:20px;text-align:center;">暂无公告</div>'}</div>
+            </div>
+            <div class="table-container">
+                <div class="table-header">⏰ 定时广播（机器人定时发送）<button class="action-btn gold" onclick="addTimedNotify()">➕ 添加定时</button></div>
+                <div style="padding:10px;">${Object.entries(notifs).map(([k,v])=>{
+                    const remaining = v.triggerAt ? Math.max(0, Math.ceil((v.triggerAt - Date.now())/60000)) : 0;
+                    return `<div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);"><span>📢 ${v.text}</span><span style="font-size:10px;color:var(--text2);">${remaining>0?remaining+'分钟后':v.time}</span><button class="action-btn danger" onclick="notifyRef.child('${k}').remove();loadNotify();">删除</button></div>`;
+                }).join('')||'<div style="color:var(--text2);padding:20px;text-align:center;">暂无定时广播</div>'}</div>
+            </div>
+        </div>`;
 }
 
-async function drawNow(key) {
-    const s = await lotteryRef.child(key).once('value');
-    const lottery = s.val();
-    if (!lottery) return;
-    const participants = Object.values(lottery.participants || {});
-    if (participants.length === 0) { alert('没有参与者'); return; }
-    
-    const count = Math.min(lottery.winnerCount || 1, participants.length);
-    const shuffled = [...participants].sort(() => Math.random() - 0.5);
-    const winners = shuffled.slice(0, count);
-
-    await lotteryRef.child(key).update({ status: 'won', winners, drawTime: Date.now() });
-
-    // 广播结果
-    const prizes = lottery.prizes || [];
-    let msg = `🎉 抽奖结果公布！\n🎁 ${lottery.title}\n──────────────────\n中奖名单：\n`;
-    winners.forEach((w, i) => { msg += `🏆 ${w.name} - ${prizes[i]?.name || prizes[0]?.name || '奖品'}\n`; });
-    msg += `──────────────────\n恭喜以上中奖用户！`;
-    
-    messagesRef.push({
-        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
-        text: msg, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
-    });
-
-    alert('✅ 开奖完成！');
-    loadLotteryPage();
-}
-
-async function broadcastLottery(key) {
-    const s = await lotteryRef.child(key).once('value');
-    const lottery = s.val();
-    if (!lottery) return;
-    const info = formatLotteryForChat(lottery);
-    messagesRef.push({
-        userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
-        text: info, timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'lottery'
-    });
-    alert('✅ 已广播');
-}
-
-async function cancelLottery(key) {
-    if (confirm('取消此抽奖？')) {
-        await lotteryRef.child(key).update({ status: 'cancelled' });
-        messagesRef.push({
-            userId: 'bot_txchat', userName: 'TxChat小助手', userAvatar: '#27ae60',
-            text: '⚠️ 抽奖活动已取消', timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'warning'
-        });
-        alert('已取消');
-        loadLotteryPage();
+function addAnnounce() {
+    const t = prompt('📢 请输入公告内容：');
+    if(t) {
+        // 保存公告
+        announcementsRef.push({text: t, time: Date.now()});
+        
+        // 机器人发送公告到聊天室（带置顶标记）
+        sendBotMessage('📢 公告\n' + t, 'announcement');
+        
+        addAuditLog('发布公告: '+t);
+        loadNotify();
+        alert('✅ 公告已发布！机器人已发送到聊天室');
     }
 }
-async function deleteLottery(key) {
-    if (confirm('删除此抽奖？')) { await lotteryRef.child(key).remove(); alert('已删除'); loadLotteryPage(); }
+
+function addTimedNotify() {
+    const t = prompt('📢 请输入广播内容：');
+    if(!t) return;
+    const time = prompt('⏰ 多少分钟后发送？', '60');
+    if(!time || isNaN(time) || time <= 0) return;
+    
+    const triggerAt = Date.now() + time * 60000;
+    
+    // 保存定时广播
+    notifyRef.push({
+        text: t,
+        time: time + '分钟后',
+        triggerAt: triggerAt
+    });
+    
+    // 设置定时发送
+    setTimeout(() => {
+        sendBotMessage('📢 定时广播\n' + t, 'announcement');
+    }, time * 60000);
+    
+    addAuditLog('添加定时广播: '+t+' ('+time+'分钟后)');
+    loadNotify();
+    alert('✅ 定时广播已设置！将在 '+time+' 分钟后发送');
+}
+
+// ==================== 界面定制 ====================
+async function loadCustomize() {
+    const c = (await customConfigRef.once('value')).val()||{};
+    document.getElementById('contentBody').innerHTML = `
+        <div class="grid-2">
+            <div class="table-container"><div class="table-header">🎨 主题</div>
+                <div style="padding:12px;">
+                    <button class="action-btn" onclick="setTheme('dark')">🌙 深色</button>
+                    <button class="action-btn" onclick="setTheme('light')">☀️ 浅色</button>
+                    <p style="font-size:11px;color:var(--text2);margin-top:8px;">当前: ${c.theme||'dark'}</p>
+                </div></div>
+            <div class="table-container"><div class="table-header">🏷️ 聊天室</div>
+                <div style="padding:12px;">
+                    <div class="form-group"><label>名称</label><input id="roomName" value="${c.roomName||'聊天大厅'}"></div>
+                    <div class="form-group"><label>欢迎语</label><input id="welcomeMsg" value="${c.welcomeMsg||'欢迎来到TxChat！'}"></div>
+                    <button class="action-btn success" onclick="saveCustomize()">💾 保存</button>
+                </div></div>
+        </div>`;
+}
+function setTheme(t) {
+    document.body.classList.toggle('light-theme', t==='light');
+    customConfigRef.child('theme').set(t);
+}
+async function saveCustomize() {
+    await customConfigRef.update({
+        roomName: document.getElementById('roomName').value,
+        welcomeMsg: document.getElementById('welcomeMsg').value
+    });
+    alert('✅ 已保存');
 }
 
 // ==================== 系统设置 ====================
 function loadSettings() {
     document.getElementById('contentBody').innerHTML = `
-        <div class="table-container" style="max-width:500px;"><div class="table-header">⚙️ 系统设置</div>
-        <div style="padding:16px;">
-            <button class="action-btn danger" onclick="if(confirm('清空所有消息？')){messagesRef.remove();alert('已清空');}">🗑️ 清空消息</button>
-            <button class="action-btn danger" onclick="if(confirm('清空所有用户？')){accountsRef.remove();usersRef.remove();alert('已清空');}" style="margin-left:10px;">🗑️ 清空用户</button>
+        <div class="table-container" style="max-width:500px;">
+            <div class="table-header">⚙️ 系统</div><div style="padding:14px;">
+            <button class="action-btn danger" onclick="if(confirm('清空消息？')){messagesRef.remove();addAuditLog('清空消息');alert('OK');}">🗑️ 清空消息</button>
+            <button class="action-btn danger" onclick="if(confirm('清空用户？')){accountsRef.remove();usersRef.remove();addAuditLog('清空用户');alert('OK');}" style="margin-left:8px;">🗑️ 清空用户</button>
+            <button class="action-btn warning" onclick="backup()" style="margin-left:8px;">💾 备份数据</button>
         </div></div>`;
+}
+async function backup() {
+    const data = {
+        accounts: (await accountsRef.once('value')).val(),
+        messages: (await messagesRef.once('value')).val(),
+        mutes: (await mutesRef.once('value')).val()
+    };
+    const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'txchat_backup_'+new Date().toISOString()+'.json';
+    a.click();
+    addAuditLog('备份数据');
 }
 
 loadDashboard();
