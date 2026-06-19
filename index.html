@@ -16,15 +16,13 @@
             width: 100%; height: 100%;
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #ffffff;
+            background: #0f0f0f; color: #ffffff;
         }
 
         .auth-screen {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(10px);
             display: flex; align-items: center; justify-content: center;
             z-index: 100; padding: 20px;
         }
@@ -32,10 +30,8 @@
         .auth-screen.hidden { display: none; }
 
         .auth-card {
-            background: #1a1a1a;
-            border-radius: 20px; padding: 32px 24px;
-            width: 100%; max-width: 400px;
-            border: 1px solid #2a2a2a; text-align: center;
+            background: #1a1a1a; border-radius: 20px; padding: 32px 24px;
+            width: 100%; max-width: 400px; border: 1px solid #2a2a2a; text-align: center;
         }
 
         .auth-card h2 { margin-bottom: 4px; font-size: 22px; }
@@ -68,23 +64,19 @@
             width: 100%; padding: 14px;
             background: #3a8fd4; border: none;
             border-radius: 12px; color: white;
-            font-size: 16px; font-weight: 600;
-            cursor: pointer; margin-top: 4px;
+            font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 4px;
         }
 
         .auth-btn:hover { opacity: 0.9; }
         .auth-error { color: #e74c3c; font-size: 13px; margin-top: 8px; min-height: 20px; }
 
         #mainApp {
-            display: none; width: 100%;
-            height: 100vh; height: 100dvh;
+            display: none; width: 100%; height: 100vh; height: 100dvh;
             flex-direction: column;
             background-color: #0f0f0f;
             background-image: url('bgh.png');
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-attachment: fixed;
+            background-size: cover; background-repeat: no-repeat;
+            background-position: center; background-attachment: fixed;
         }
 
         #mainApp.active { display: flex; }
@@ -92,8 +84,8 @@
         .topbar {
             flex-shrink: 0; padding: 8px 16px;
             background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
-            display: flex; align-items: center;
-            justify-content: space-between; min-height: 48px; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 48px; z-index: 10;
         }
 
         .room-info h3 { font-size: 15px; font-weight: 600; }
@@ -125,36 +117,19 @@
         }
 
         .messages-wrapper {
-            flex: 1; overflow-y: auto;
-            padding: 12px 16px;
+            flex: 1; overflow-y: auto; padding: 12px 16px;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* 消息行 - 统一左对齐 */
         .msg-row {
-            display: flex;
-            gap: 6px;
-            max-width: 75%;
-            animation: fadeUp 0.2s ease;
-            margin-bottom: 4px;
-            align-self: flex-start;
-            position: relative;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
+            display: flex; gap: 6px; max-width: 75%;
+            animation: fadeUp 0.2s ease; margin-bottom: 4px;
+            align-self: flex-start; position: relative;
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
         }
 
-        /* 自己的消息 - 右对齐 */
-        .msg-row.mine {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        /* 机器人的消息 - 左对齐（默认） */
-        .msg-row.bot {
-            align-self: flex-start;
-            flex-direction: row;
-        }
+        .msg-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+        .msg-row.bot { align-self: flex-start; flex-direction: row; }
 
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(8px); }
@@ -177,28 +152,16 @@
         .msg-sender.bot-sender { color: #27ae60; }
 
         .msg-bubble {
-            padding: 6px 10px;
-            border-radius: 6px 12px 12px 6px;
+            padding: 6px 10px; border-radius: 6px 12px 12px 6px;
             position: relative; word-break: break-word;
             line-height: 1.4; display: inline-block;
             max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        /* 普通用户气泡 */
         .msg-bubble.user-bubble { background: #212121; }
-
-        /* 自己的气泡 */
-        .msg-row.mine .msg-bubble {
-            background: #2b5278;
-            border-radius: 12px 6px 6px 12px;
-        }
-
-        /* 机器人气泡 */
-        .msg-bubble.bot-bubble {
-            background: #1a2e1a;
-            border: 1px solid #27ae60;
-            border-radius: 6px 12px 12px 6px;
-        }
+        .msg-row.mine .msg-bubble { background: #2b5278; border-radius: 12px 6px 6px 12px; }
+        .msg-bubble.bot-bubble { background: #1a2e1a; border: 1px solid #27ae60; border-radius: 6px 12px 12px 6px; }
+        .msg-bubble.warning-bubble { background: #3a2a1a; border: 1px solid #e74c3c; border-radius: 6px 12px 12px 6px; }
 
         .msg-text {
             font-size: 14px; line-height: 1.4;
@@ -210,7 +173,6 @@
             position: absolute; bottom: 4px; right: 7px;
         }
 
-        /* 长按菜单 */
         .context-menu {
             position: fixed; background: #1a1a1a;
             border: 1px solid #2a2a2a; border-radius: 12px;
@@ -236,10 +198,9 @@
         .context-menu-item.delete { color: #e74c3c; }
 
         .load-more-btn {
-            display: block; margin: 10px auto;
-            padding: 8px 20px; background: #1a1a1a;
-            border: 1px solid #2a2a2a; border-radius: 20px;
-            color: #3a8fd4; cursor: pointer; font-size: 13px;
+            display: block; margin: 10px auto; padding: 8px 20px;
+            background: #1a1a1a; border: 1px solid #2a2a2a;
+            border-radius: 20px; color: #3a8fd4; cursor: pointer; font-size: 13px;
         }
 
         .input-bar {
@@ -258,13 +219,13 @@
 
         .input-bar input:focus { border-color: #3a8fd4; }
         .input-bar input::placeholder { color: #666; }
+        .input-bar input.muted { background: #3a1a1a; color: #e74c3c; }
 
         .send-btn {
             background: #3a8fd4; border: none; color: white;
             width: 42px; height: 42px; border-radius: 50%;
             cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
         .send-btn:active { opacity: 0.7; }
@@ -274,8 +235,7 @@
             height: 100%; width: 260px;
             background: #1a1a1a; border-left: 1px solid #2a2a2a;
             display: flex; flex-direction: column;
-            transition: 0.3s; z-index: 50;
-            transform: translateX(100%);
+            transition: 0.3s; z-index: 50; transform: translateX(100%);
         }
 
         .online-panel.open { transform: translateX(0); }
@@ -283,15 +243,13 @@
         .online-header {
             padding: 12px 14px; border-bottom: 1px solid #2a2a2a;
             display: flex; justify-content: space-between;
-            align-items: center; font-weight: 600; font-size: 14px;
-            flex-shrink: 0;
+            align-items: center; font-weight: 600; font-size: 14px; flex-shrink: 0;
         }
 
         .online-list { flex: 1; overflow-y: auto; padding: 6px 0; }
 
         .online-user {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 14px;
+            display: flex; align-items: center; gap: 8px; padding: 8px 14px;
         }
 
         .online-dot {
@@ -299,13 +257,15 @@
             background: #4caf50; flex-shrink: 0;
         }
 
+        .online-dot.muted { background: #e74c3c; }
+
         .online-user span { font-size: 13px; }
+        .online-user .muted-tag { color: #e74c3c; font-size: 11px; }
 
         .online-overlay {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 49; display: none;
+            background: rgba(0,0,0,0.5); z-index: 49; display: none;
         }
 
         .online-overlay.open { display: block; }
@@ -314,11 +274,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        .messages-area {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
+        .messages-area { display: flex; flex-direction: column; width: 100%; }
     </style>
 </head>
 <body>
@@ -380,24 +336,16 @@
     </div>
 
     <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item copy" onclick="copyMessage()">
-            <i class="fas fa-copy"></i> 复制
-        </div>
-        <div class="context-menu-item recall" onclick="recallMessage()">
-            <i class="fas fa-undo"></i> 撤回
-        </div>
-        <div class="context-menu-item delete" onclick="deleteMessage()">
-            <i class="fas fa-trash"></i> 删除
-        </div>
+        <div class="context-menu-item copy" onclick="copyMessage()"><i class="fas fa-copy"></i> 复制</div>
+        <div class="context-menu-item recall" onclick="recallMessage()"><i class="fas fa-undo"></i> 撤回</div>
+        <div class="context-menu-item delete" onclick="deleteMessage()"><i class="fas fa-trash"></i> 删除</div>
     </div>
 
     <div class="online-overlay" id="onlineOverlay" onclick="toggleOnlinePanel()"></div>
     <div class="online-panel" id="onlinePanel">
         <div class="online-header">
             <span>在线用户</span>
-            <button class="icon-btn" onclick="toggleOnlinePanel()">
-                <i class="fas fa-times"></i>
-            </button>
+            <button class="icon-btn" onclick="toggleOnlinePanel()"><i class="fas fa-times"></i></button>
         </div>
         <div class="online-list" id="onlineList"></div>
     </div>
@@ -414,7 +362,7 @@
             measurementId: "G-1ENE8S87JN"
         };
 
-        let database, messagesRef, usersRef;
+        let database, messagesRef, usersRef, mutesRef, warnsRef, welcomeRef;
         let currentUser = null, userRef = null;
         let oldestMessageKey = null;
         let allMessages = {};
@@ -428,32 +376,26 @@
             isBot: true
         };
 
-        const WELCOME_MESSAGES = [
-            '欢迎 {user} 加入TxChat！🌍 请文明聊天，遵守规则',
-            '嗨 {user}！欢迎来到聊天室 🎉 机器人小助手为您服务',
-            '{user} 来啦！👋 请注意不要发送广告和违规内容哦',
-            '欢迎新朋友 {user}！💫 聊天室规则：禁止广告、禁止刷屏',
-            '{user} 加入了聊天室 ✨ 祝您聊天愉快！'
-        ];
+        // ==================== 敏感词库 ====================
+        const AD_WORDS = ['加微信', '微信号', '扫码', '免费领取', '点击链接', '赚钱', '兼职', '日赚', '代理', '加盟', '微商', '低价', '优惠', '折扣', '促销', '限时', '加群', 'QQ群', '群号'];
+        const PORN_WORDS = ['裸', '骚', '淫', '色情', '成人', '激情', '一夜情', '约炮', '小姐', '上门', '性爱', '做爱', 'fuck', 'sex'];
+        const URL_PATTERN = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.(com|cn|net|org|cc|top|xyz|vip|shop|app|info))/gi;
 
-        const SENSITIVE_WORDS = [
-            '加微信', '加我微信', '微信号', '扫码', '免费领取', '点击链接',
-            'http://', 'https://', 'www.', '.com', '.cn', '.net',
-            '赚钱', '兼职', '日赚', '代理', '加盟', '微商',
-            '低价', '优惠', '折扣', '促销', '限时',
-            '加群', 'QQ群', '群号',
-            '裸', '骚', '淫', '色情', '成人', '激情',
-            '一夜情', '约炮', '小姐', '上门',
-            '赌博', '下注', '彩票', '开奖', '赌博网站',
-        ];
-
-        const userMessageLog = {};
+        // 用户状态存储
+        const userMsgLog = {};       // 消息记录 {userId: [{text, time}]}
+        const userSpamCount = {};    // 刷屏计数
+        const userAdWarnCount = {};  // 广告警告计数
+        const userMuteUntil = {};    // 禁言到期时间
+        const welcomedToday = {};    // 今天是否已欢迎
 
         try {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             messagesRef = database.ref('messages');
             usersRef = database.ref('users');
+            mutesRef = database.ref('mutes');
+            warnsRef = database.ref('warns');
+            welcomeRef = database.ref('welcome_log');
         } catch (e) {
             console.error('Firebase 初始化失败', e);
         }
@@ -477,59 +419,228 @@
                     closeContextMenu();
                 }
             });
+
+            // 监听禁言状态
+            if (mutesRef) {
+                mutesRef.on('value', function(snapshot) {
+                    const mutes = snapshot.val() || {};
+                    for (const userId in mutes) {
+                        userMuteUntil[userId] = mutes[userId].until;
+                    }
+                    updateMuteUI();
+                });
+            }
+
+            // 监听警告状态
+            if (warnsRef) {
+                warnsRef.on('value', function(snapshot) {
+                    const warns = snapshot.val() || {};
+                    for (const userId in warns) {
+                        userAdWarnCount[userId] = warns[userId].count || 0;
+                    }
+                });
+            }
         }
 
-        function sendBotMessage(text) {
+        // ==================== 机器人核心 ====================
+        function sendBotMessage(text, type = 'bot') {
             const msg = {
                 userId: BOT_CONFIG.id,
                 userName: BOT_CONFIG.name,
                 userAvatar: BOT_CONFIG.avatar,
                 text: text,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
-                type: 'bot'
+                type: type
             };
             messagesRef.push(msg);
         }
 
-        function welcomeUser(username) {
-            const randomMsg = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)];
-            const welcomeText = randomMsg.replace('{user}', username);
-            setTimeout(() => {
-                sendBotMessage(welcomeText);
-            }, 800);
+        // 规则1：检查刷屏（过快或重复5条）
+        function checkSpam(userId, text) {
+            const now = Date.now();
+            if (!userMsgLog[userId]) userMsgLog[userId] = [];
+            
+            // 清理10秒前的记录
+            userMsgLog[userId] = userMsgLog[userId].filter(m => now - m.time < 10000);
+            userMsgLog[userId].push({ text, time: now });
+
+            // 检测重复消息（5条相同）
+            const sameMsgs = userMsgLog[userId].filter(m => m.text === text);
+            if (sameMsgs.length >= 5) {
+                return { type: 'repeat', count: sameMsgs.length };
+            }
+
+            // 检测发送过快（3秒内超过4条）
+            const recentMsgs = userMsgLog[userId].filter(m => now - m.time < 3000);
+            if (recentMsgs.length > 4) {
+                return { type: 'fast', count: recentMsgs.length };
+            }
+
+            return null;
         }
 
-        function detectSensitiveWords(text) {
-            const lowerText = text.toLowerCase();
-            for (const word of SENSITIVE_WORDS) {
-                if (lowerText.includes(word.toLowerCase())) {
-                    return word;
-                }
+        // 规则2：检查色情
+        function checkPorn(text) {
+            const lower = text.toLowerCase();
+            for (const word of PORN_WORDS) {
+                if (lower.includes(word.toLowerCase())) return word;
             }
             return null;
         }
 
-        function detectURL(text) {
-            const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.(com|cn|net|org|cc|top|xyz|vip|shop|app|info))/gi;
-            return urlPattern.test(text);
+        // 规则4：检查广告
+        function checkAd(text) {
+            const lower = text.toLowerCase();
+            for (const word of AD_WORDS) {
+                if (lower.includes(word.toLowerCase())) return word;
+            }
+            if (URL_PATTERN.test(text)) return '链接';
+            return null;
         }
 
-        function detectSpam(userId) {
-            const now = Date.now();
-            if (!userMessageLog[userId]) {
-                userMessageLog[userId] = [];
+        // 禁言用户
+        function muteUser(userId, userName, duration, reason) {
+            const until = Date.now() + duration;
+            userMuteUntil[userId] = until;
+            
+            if (mutesRef) {
+                mutesRef.child(userId).set({
+                    until: until,
+                    reason: reason,
+                    mutedAt: firebase.database.ServerValue.TIMESTAMP
+                });
             }
+
+            const minutes = Math.floor(duration / 60000);
+            const timeStr = minutes >= 60 ? (minutes / 60) + '小时' : minutes + '分钟';
+            sendBotMessage(`🚫 ${userName} 因【${reason}】被禁言${timeStr}`, 'warning');
             
-            userMessageLog[userId] = userMessageLog[userId].filter(t => now - t < 3000);
-            userMessageLog[userId].push(now);
-            
-            if (userMessageLog[userId].length > 5) {
-                return true;
-            }
-            
-            return false;
+            // 清除该用户的消息记录
+            delete userMsgLog[userId];
         }
 
+        // 规则3：每天欢迎一次
+        function checkDailyWelcome(userId, userName) {
+            const today = new Date().toDateString();
+            const key = userId + '_' + today;
+            
+            if (welcomedToday[key]) return;
+            
+            welcomedToday[key] = true;
+            
+            // 同时存储到Firebase
+            if (welcomeRef) {
+                welcomeRef.child(key).set({
+                    userId, userName,
+                    date: today,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+
+            const welcomeTexts = [
+                `欢迎 ${userName} 加入TxChat！🌍 请文明聊天，遵守规则`,
+                `嗨 ${userName}！欢迎来到聊天室 🎉 禁止广告、色情、刷屏`,
+                `${userName} 来啦！👋 聊天室规则：文明发言，违规禁言`
+            ];
+            const msg = welcomeTexts[Math.floor(Math.random() * welcomeTexts.length)];
+            sendBotMessage(msg);
+        }
+
+        // 更新禁言UI
+        function updateMuteUI() {
+            const input = document.getElementById('messageInput');
+            if (!input || !currentUser) return;
+
+            const mutedUntil = userMuteUntil[currentUser.id];
+            if (mutedUntil && Date.now() < mutedUntil) {
+                input.classList.add('muted');
+                const remaining = Math.ceil((mutedUntil - Date.now()) / 60000);
+                input.placeholder = `🚫 已被禁言，剩余 ${remaining} 分钟`;
+                input.disabled = true;
+            } else {
+                input.classList.remove('muted');
+                input.placeholder = '输入消息... ';
+                input.disabled = false;
+            }
+        }
+
+        // ==================== 发送消息（带审核） ====================
+        function sendMessage() {
+            if (!currentUser) return;
+
+            // 检查是否被禁言
+            const mutedUntil = userMuteUntil[currentUser.id];
+            if (mutedUntil && Date.now() < mutedUntil) {
+                const remaining = Math.ceil((mutedUntil - Date.now()) / 60000);
+                showToast(`🚫 你已被禁言，剩余 ${remaining} 分钟`);
+                return;
+            }
+
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 规则2：色情检测
+            const pornWord = checkPorn(text);
+            if (pornWord) {
+                input.value = '';
+                showToast('⚠️ 消息包含违规内容');
+                muteUser(currentUser.id, currentUser.name, 3600000, '发送色情内容');
+                return;
+            }
+
+            // 规则4：广告检测
+            const adWord = checkAd(text);
+            if (adWord) {
+                input.value = '';
+                userAdWarnCount[currentUser.id] = (userAdWarnCount[currentUser.id] || 0) + 1;
+                
+                if (warnsRef) {
+                    warnsRef.child(currentUser.id).set({
+                        count: userAdWarnCount[currentUser.id],
+                        lastWarn: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+
+                if (userAdWarnCount[currentUser.id] >= 3) {
+                    muteUser(currentUser.id, currentUser.name, 3600000, '多次发送广告');
+                    userAdWarnCount[currentUser.id] = 0;
+                    if (warnsRef) warnsRef.child(currentUser.id).remove();
+                } else {
+                    const remaining = 3 - userAdWarnCount[currentUser.id];
+                    showToast(`⚠️ 请勿发送广告！剩余警告次数：${remaining}/3`);
+                    sendBotMessage(`⚠️ ${currentUser.name} 请勿发送广告！警告 ${userAdWarnCount[currentUser.id]}/3（3次将禁言1小时）`, 'warning');
+                }
+                return;
+            }
+
+            // 规则1：刷屏检测
+            const spamResult = checkSpam(currentUser.id, text);
+            if (spamResult) {
+                input.value = '';
+                if (spamResult.type === 'repeat') {
+                    showToast('⚠️ 请勿重复发送相同消息');
+                    muteUser(currentUser.id, currentUser.name, 1800000, '重复发送相同消息5次');
+                } else {
+                    showToast('⚠️ 发送过快，请稍后再试');
+                    muteUser(currentUser.id, currentUser.name, 1800000, '发送消息过快');
+                }
+                return;
+            }
+
+            // 通过审核，发送消息
+            messagesRef.push({
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userAvatar: currentUser.avatar,
+                text: text,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            input.value = '';
+            input.focus();
+        }
+
+        // ==================== 长按菜单 ====================
         let longPressTimer = null;
         let touchStartY = 0, touchStartX = 0;
 
@@ -548,14 +659,13 @@
             }, { passive: false });
 
             element.addEventListener('touchmove', function(e) {
-                const moveX = Math.abs(e.touches[0].clientX - touchStartX);
-                const moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                if (moveX > 10 || moveY > 10) clearTimeout(longPressTimer);
+                if (Math.abs(e.touches[0].clientX - touchStartX) > 10 || Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+                    clearTimeout(longPressTimer);
+                }
             }, { passive: false });
 
-            element.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
-            element.addEventListener('touchcancel', function() { clearTimeout(longPressTimer); });
-
+            element.addEventListener('touchend', () => clearTimeout(longPressTimer));
+            element.addEventListener('touchcancel', () => clearTimeout(longPressTimer));
             element.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 selectedMsgKey = msgKey;
@@ -572,70 +682,49 @@
             document.querySelector('.context-menu-item.recall').style.display = (isMine && !isBot) ? 'flex' : 'none';
             document.querySelector('.context-menu-item.delete').style.display = (isMine && !isBot) ? 'flex' : 'none';
             
-            const clientX = event.clientX || (event.touches?.[0]?.clientX || 100);
-            const clientY = event.clientY || (event.touches?.[0]?.clientY || 100);
+            const cx = event.clientX || (event.touches?.[0]?.clientX || 100);
+            const cy = event.clientY || (event.touches?.[0]?.clientY || 100);
             
-            let x = clientX, y = clientY;
+            let x = cx, y = cy;
             if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
             if (y + 140 > window.innerHeight) y = window.innerHeight - 150;
-            if (x < 10) x = 10;
-            if (y < 10) y = 10;
+            if (x < 10) x = 10; if (y < 10) y = 10;
             
-            menu.style.left = x + 'px';
-            menu.style.top = y + 'px';
+            menu.style.left = x + 'px'; menu.style.top = y + 'px';
             menu.classList.add('show');
         }
 
         function copyMessage() {
-            if (selectedMsgData && selectedMsgData.text && !selectedMsgData.recalled) {
-                navigator.clipboard.writeText(selectedMsgData.text).then(() => {
-                    showToast('✅ 已复制');
-                }).catch(() => showToast('复制失败'));
+            if (selectedMsgData?.text && !selectedMsgData.recalled) {
+                navigator.clipboard.writeText(selectedMsgData.text).then(() => showToast('✅ 已复制')).catch(() => showToast('复制失败'));
             }
             closeContextMenu();
         }
 
         function recallMessage() {
-            if (!selectedMsgKey || !currentUser) return;
-            if (selectedMsgData.userId !== currentUser.id) {
-                showToast('只能撤回自己的消息');
-                closeContextMenu();
-                return;
+            if (!selectedMsgKey || !currentUser || selectedMsgData.userId !== currentUser.id) {
+                showToast('只能撤回自己的消息'); closeContextMenu(); return;
             }
-            const msgTime = selectedMsgData.timestamp;
-            if (Date.now() - msgTime > 120000) {
-                showToast('超过2分钟无法撤回');
-                closeContextMenu();
-                return;
+            if (Date.now() - selectedMsgData.timestamp > 120000) {
+                showToast('超过2分钟无法撤回'); closeContextMenu(); return;
             }
-            messagesRef.child(selectedMsgKey).update({
-                text: '该消息已被撤回',
-                recalled: true
-            });
-            closeContextMenu();
-            showToast('✅ 已撤回');
+            messagesRef.child(selectedMsgKey).update({ text: '该消息已被撤回', recalled: true });
+            closeContextMenu(); showToast('✅ 已撤回');
         }
 
         function deleteMessage() {
-            if (!selectedMsgKey || !currentUser) return;
-            if (selectedMsgData.userId !== currentUser.id) {
-                showToast('只能删除自己的消息');
-                closeContextMenu();
-                return;
+            if (!selectedMsgKey || !currentUser || selectedMsgData.userId !== currentUser.id) {
+                showToast('只能删除自己的消息'); closeContextMenu(); return;
             }
             if (confirm('确定要删除这条消息吗？')) {
                 messagesRef.child(selectedMsgKey).remove();
-                closeContextMenu();
-                showToast('🗑️ 已删除');
-            } else {
-                closeContextMenu();
-            }
+                closeContextMenu(); showToast('🗑️ 已删除');
+            } else { closeContextMenu(); }
         }
 
         function closeContextMenu() {
             document.getElementById('contextMenu').classList.remove('show');
-            selectedMsgKey = null;
-            selectedMsgData = null;
+            selectedMsgKey = null; selectedMsgData = null;
         }
 
         function showToast(text) {
@@ -643,20 +732,15 @@
             if (!toast) {
                 toast = document.createElement('div');
                 toast.id = 'toast';
-                toast.style.cssText = `
-                    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
-                    background:rgba(0,0,0,0.9); color:white; padding:10px 22px;
-                    border-radius:24px; font-size:14px; z-index:300;
-                    transition:opacity 0.3s; pointer-events:none; white-space:nowrap;
-                `;
+                toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:white;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;';
                 document.body.appendChild(toast);
             }
-            toast.textContent = text;
-            toast.style.opacity = '1';
+            toast.textContent = text; toast.style.opacity = '1';
             clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+            toast._timeout = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
 
+        // ==================== 登录/注册 ====================
         function switchTab(tab) {
             document.getElementById('loginTab').classList.remove('active');
             document.getElementById('registerTab').classList.remove('active');
@@ -679,45 +763,36 @@
             if (!username || username.length < 3 || username.length > 15) {
                 document.getElementById('authError').textContent = '用户名需要3-15个字符'; return;
             }
-            if (password.length < 6) {
-                document.getElementById('authError').textContent = '密码至少6位'; return;
-            }
-            if (password !== password2) {
-                document.getElementById('authError').textContent = '两次密码不一致'; return;
-            }
+            if (password.length < 6) { document.getElementById('authError').textContent = '密码至少6位'; return; }
+            if (password !== password2) { document.getElementById('authError').textContent = '两次密码不一致'; return; }
+            
             database.ref('accounts/' + username).once('value').then(function(snapshot) {
                 if (snapshot.exists()) {
                     document.getElementById('authError').textContent = '用户名已存在';
                     return Promise.reject('用户名已存在');
                 }
                 return database.ref('accounts/' + username).set({
-                    username, password,
-                    avatar: randomColor(),
+                    username, password, avatar: randomColor(),
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
             }).then(function() {
                 currentUser = { id: username, name: username, avatar: randomColor(), online: true };
                 localStorage.setItem('telechat_user', JSON.stringify(currentUser));
                 enterChatRoom();
-            }).catch(function(error) {
-                if (error !== '用户名已存在') document.getElementById('authError').textContent = '注册失败';
+            }).catch(function(e) {
+                if (e !== '用户名已存在') document.getElementById('authError').textContent = '注册失败';
             });
         }
 
         function handleLogin() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
-            if (!username || !password) {
-                document.getElementById('authError').textContent = '请输入用户名和密码'; return;
-            }
+            if (!username || !password) { document.getElementById('authError').textContent = '请输入用户名和密码'; return; }
+            
             database.ref('accounts/' + username).once('value').then(function(snapshot) {
-                if (!snapshot.exists()) {
-                    document.getElementById('authError').textContent = '用户不存在'; return;
-                }
+                if (!snapshot.exists()) { document.getElementById('authError').textContent = '用户不存在'; return; }
                 const account = snapshot.val();
-                if (account.password !== password) {
-                    document.getElementById('authError').textContent = '密码错误'; return;
-                }
+                if (account.password !== password) { document.getElementById('authError').textContent = '密码错误'; return; }
                 currentUser = { id: username, name: username, avatar: account.avatar || randomColor(), online: true };
                 localStorage.setItem('telechat_user', JSON.stringify(currentUser));
                 enterChatRoom();
@@ -732,6 +807,8 @@
             document.getElementById('messagesArea').innerHTML = '';
             document.getElementById('mainApp').classList.remove('active');
             document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('messageInput').classList.remove('muted');
         }
 
         function enterChatRoom() {
@@ -749,7 +826,10 @@
             });
             userRef.onDisconnect().remove();
 
-            welcomeUser(currentUser.name);
+            // 规则3：每天欢迎一次
+            checkDailyWelcome(currentUser.id, currentUser.name);
+
+            updateMuteUI();
             loadLatestMessages();
             listenForNewMessages();
             
@@ -760,7 +840,7 @@
 
         function loadLatestMessages() {
             const area = document.getElementById('messagesArea');
-            area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">加载历史消息中...</div>';
+            area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">加载中...</div>';
             messagesRef.limitToLast(MESSAGES_PER_PAGE).once('value', function(snapshot) {
                 const messages = snapshot.val() || {};
                 allMessages = messages;
@@ -771,7 +851,7 @@
                     keys.forEach(key => displayMessage(messages[key], key, false));
                     updateLoadMoreButton(keys.length);
                 } else {
-                    area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">暂无消息，发送第一条消息吧！🌍</div>';
+                    area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
                 }
                 scrollToBottom();
             });
@@ -787,13 +867,10 @@
                     if (!oldestMessageKey) oldestMessageKey = msgKey;
                 }
             });
-
             messagesRef.on('child_changed', function(snapshot) {
-                const msg = snapshot.val();
-                allMessages[snapshot.key] = msg;
+                allMessages[snapshot.key] = snapshot.val();
                 refreshMessages();
             });
-
             messagesRef.on('child_removed', function(snapshot) {
                 delete allMessages[snapshot.key];
                 refreshMessages();
@@ -805,9 +882,7 @@
             area.innerHTML = '';
             const keys = Object.keys(allMessages).sort();
             keys.forEach(key => displayMessage(allMessages[key], key, false));
-            if (keys.length === 0) {
-                area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">暂无消息，发送第一条消息吧！🌍</div>';
-            }
+            if (keys.length === 0) area.innerHTML = '<div style="text-align:center;color:#888;padding:30px;">暂无消息 🌍</div>';
             updateLoadMoreButton(keys.length);
         }
 
@@ -818,54 +893,16 @@
             messagesRef.orderByKey().endAt(oldestMessageKey).limitToLast(MESSAGES_PER_PAGE + 1).once('value', function(snapshot) {
                 const messages = snapshot.val() || {};
                 const keys = Object.keys(messages);
-                if (keys.length <= 1) {
-                    btn.textContent = '没有更多消息了';
-                    setTimeout(() => { btn.style.display = 'none'; }, 1500);
-                    return;
-                }
+                if (keys.length <= 1) { btn.textContent = '没有更多'; setTimeout(() => btn.style.display = 'none', 1500); return; }
                 keys.pop(); oldestMessageKey = keys[0];
                 keys.forEach(key => { if (!allMessages[key]) allMessages[key] = messages[key]; });
                 refreshMessages();
-                btn.textContent = '加载更多历史消息'; btn.disabled = false;
+                btn.textContent = '加载更多'; btn.disabled = false;
             });
         }
 
         function updateLoadMoreButton(count) {
             document.getElementById('loadMoreBtn').style.display = count >= MESSAGES_PER_PAGE ? 'block' : 'none';
-        }
-
-        function sendMessage() {
-            if (!currentUser) return;
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            if (detectSpam(currentUser.id)) {
-                showToast('⚠️ 发送太快，请稍后再试');
-                return;
-            }
-
-            const sensitiveWord = detectSensitiveWords(text);
-            if (sensitiveWord) {
-                showToast('⚠️ 消息包含违规内容，请修改');
-                input.value = '';
-                return;
-            }
-
-            if (detectURL(text)) {
-                showToast('⚠️ 不允许发送链接');
-                input.value = '';
-                return;
-            }
-
-            messagesRef.push({
-                userId: currentUser.id,
-                userName: currentUser.name,
-                userAvatar: currentUser.avatar,
-                text: text,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            input.value = ''; input.focus();
         }
 
         function displayMessage(msg, msgKey, scrollToBottom = true) {
@@ -875,32 +912,27 @@
             
             const isMine = currentUser && msg.userId === currentUser.id;
             const isBot = msg.type === 'bot' || msg.userId === BOT_CONFIG.id;
+            const isWarning = msg.type === 'warning';
             const time = msg.timestamp ? formatTime(msg.timestamp) : '';
             const displayText = msg.recalled ? '<span style="font-style:italic;color:#999;">该消息已被撤回</span>' : escapeHtml(msg.text);
             
             const div = document.createElement('div');
-            
-            // 设置正确的CSS类
-            if (isMine) {
-                div.className = 'msg-row mine';
-            } else if (isBot) {
-                div.className = 'msg-row bot';
-            } else {
-                div.className = 'msg-row';
-            }
+            if (isMine) div.className = 'msg-row mine';
+            else if (isBot || isWarning) div.className = 'msg-row bot';
+            else div.className = 'msg-row';
             
             div.setAttribute('data-msg-key', msgKey);
             
-            const senderClass = isBot ? 'bot-sender' : 'user';
-            const bubbleClass = isBot ? 'bot-bubble' : 'user-bubble';
-            const avatarContent = isBot ? '🤖' : (msg.userName || '?')[0].toUpperCase();
+            const senderClass = (isBot || isWarning) ? 'bot-sender' : 'user';
+            const bubbleClass = isWarning ? 'warning-bubble' : (isBot ? 'bot-bubble' : 'user-bubble');
+            const avatarContent = (isBot || isWarning) ? '🤖' : (msg.userName || '?')[0].toUpperCase();
             
             div.innerHTML = `
                 <div class="msg-avatar" style="background:${msg.userAvatar || '#666'};">
                     ${avatarContent}
                 </div>
                 <div>
-                    ${!isMine ? '<div class="msg-sender ' + senderClass + '">' + escapeHtml(msg.userName) + (isBot ? ' 🤖' : '') + '</div>' : ''}
+                    ${!isMine ? '<div class="msg-sender ' + senderClass + '">' + escapeHtml(msg.userName) + ((isBot || isWarning) ? ' 🤖' : '') + '</div>' : ''}
                     <div class="msg-bubble ${bubbleClass}">
                         <div class="msg-text">${displayText}</div>
                         <div class="msg-time">${time}</div>
@@ -909,7 +941,6 @@
             
             setupLongPress(div, msgKey, msg);
             area.appendChild(div);
-            
             if (scrollToBottom) setTimeout(scrollToBottom, 50);
         }
 
@@ -923,13 +954,16 @@
             const count = document.getElementById('onlineStatus');
             const userArray = Object.values(users);
             if (list) {
-                list.innerHTML = userArray.map(u => `
-                    <div class="online-user">
-                        <div class="online-dot"></div>
-                        <div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div>
-                        <span>${escapeHtml(u.name)} ${u.id === currentUser?.id ? '(你)' : ''}</span>
-                    </div>
-                `).join('');
+                list.innerHTML = userArray.map(u => {
+                    const isMuted = userMuteUntil[u.id] && Date.now() < userMuteUntil[u.id];
+                    return `
+                        <div class="online-user">
+                            <div class="online-dot ${isMuted ? 'muted' : ''}"></div>
+                            <div class="avatar-sm" style="background:${u.avatar};width:24px;height:24px;font-size:11px;">${u.name[0].toUpperCase()}</div>
+                            <span>${escapeHtml(u.name)} ${u.id === currentUser?.id ? '(你)' : ''}</span>
+                            ${isMuted ? '<span class="muted-tag">禁言</span>' : ''}
+                        </div>`;
+                }).join('');
             }
             if (count) count.textContent = '在线: ' + userArray.length + ' · 全球';
         }
@@ -944,9 +978,9 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        function formatTime(timestamp) {
-            if (!timestamp) return '';
-            const d = new Date(timestamp);
+        function formatTime(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
             return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
         }
 
