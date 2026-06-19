@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TX · 聊天室</title>
+    <title>TeleChat · 全球聊天室</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     
@@ -44,7 +43,6 @@
             background-size: cover;
         }
 
-        /* ========== 登录/注册界面 ========== */
         .auth-screen {
             position: fixed;
             top: 0; left: 0;
@@ -134,7 +132,6 @@
             min-height: 20px; 
         }
 
-        /* ========== 聊天界面 ========== */
         .chat-container {
             flex: 1;
             display: flex;
@@ -332,26 +329,22 @@
     </style>
 </head>
 <body>
-    <!-- ==================== 登录/注册界面 ==================== -->
     <div class="auth-screen" id="authScreen">
         <div class="auth-card">
             <h2>🌍 TeleChat</h2>
             <p>全球聊天室 · 用户名登录</p>
             
-            <!-- 登录/注册切换 -->
             <div class="auth-tabs">
                 <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">登录</button>
                 <button class="auth-tab" id="registerTab" onclick="switchTab('register')">注册</button>
             </div>
 
-            <!-- 登录表单 -->
             <div id="loginForm">
                 <input class="auth-input" type="text" id="loginUsername" placeholder="用户名" autocomplete="off">
                 <input class="auth-input" type="password" id="loginPassword" placeholder="密码" autocomplete="off">
                 <button class="auth-btn" onclick="handleLogin()">登 录</button>
             </div>
 
-            <!-- 注册表单 -->
             <div id="registerForm" style="display:none;">
                 <input class="auth-input" type="text" id="regUsername" placeholder="设置用户名 (3-15位)" maxlength="15" autocomplete="off">
                 <input class="auth-input" type="password" id="regPassword" placeholder="设置密码 (6位以上)" autocomplete="off">
@@ -363,7 +356,6 @@
         </div>
     </div>
 
-    <!-- ==================== 聊天界面 ==================== -->
     <div class="app" id="mainApp">
         <div class="chat-container">
             <div class="topbar">
@@ -408,19 +400,18 @@
     </div>
 
     <script>
-        // ==================== Firebase 配置 ====================
-        // 🔥 请替换为你的 Firebase 配置
-         const firebaseConfig = {
-  apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
-  authDomain: "zmvv2011.firebaseapp.com",
-  projectId: "zmvv2011",
-  storageBucket: "zmvv2011.firebasestorage.app",
-  messagingSenderId: "793178735751",
-  appId: "1:793178735751:web:626cca2b17d34681cce422",
-  measurementId: "G-1ENE8S87JN"
-};
+        // ==================== 🔥 你的Firebase配置 ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCI5yewq1Cu5I38LLjuky9KG1rnKh76W4Q",
+            authDomain: "zmvv2011.firebaseapp.com",
+            databaseURL: "https://zmvv2011-default-rtdb.firebaseio.com",
+            projectId: "zmvv2011",
+            storageBucket: "zmvv2011.firebasestorage.app",
+            messagingSenderId: "793178735751",
+            appId: "1:793178735751:web:626cca2b17d34681cce422",
+            measurementId: "G-1ENE8S87JN"
+        };
 
-        // 初始化 Firebase
         let database;
         let messagesRef;
         let usersRef;
@@ -439,9 +430,7 @@
             console.error('Firebase 初始化失败');
         }
 
-        // ==================== 初始化 ====================
         function init() {
-            // 检查本地是否已登录
             const savedUser = localStorage.getItem('telechat_user');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
@@ -455,7 +444,6 @@
             });
         }
 
-        // ==================== 登录/注册 ====================
         function switchTab(tab) {
             document.getElementById('loginTab').classList.remove('active');
             document.getElementById('registerTab').classList.remove('active');
@@ -477,7 +465,6 @@
             const password = document.getElementById('regPassword').value;
             const password2 = document.getElementById('regPassword2').value;
 
-            // 验证
             if (!username || username.length < 3 || username.length > 15) {
                 document.getElementById('authError').textContent = '用户名需要3-15个字符';
                 return;
@@ -491,14 +478,11 @@
                 return;
             }
 
-            // 检查用户名是否已存在
             database.ref('accounts/' + username).once('value').then(function(snapshot) {
                 if (snapshot.exists()) {
                     document.getElementById('authError').textContent = '用户名已存在，请换一个';
-                    return;
+                    return Promise.reject('用户名已存在');
                 }
-
-                // 保存账号信息
                 return database.ref('accounts/' + username).set({
                     username: username,
                     password: password,
@@ -506,19 +490,18 @@
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
             }).then(function() {
-                // 注册成功，自动登录
                 currentUser = {
                     id: username,
                     name: username,
                     avatar: randomColor(),
                     online: true
                 };
-                
                 localStorage.setItem('telechat_user', JSON.stringify(currentUser));
                 enterChatRoom();
             }).catch(function(error) {
-                document.getElementById('authError').textContent = '注册失败，请重试';
-                console.error(error);
+                if (error !== '用户名已存在') {
+                    document.getElementById('authError').textContent = '注册失败，请重试';
+                }
             });
         }
 
@@ -531,7 +514,6 @@
                 return;
             }
 
-            // 验证账号
             database.ref('accounts/' + username).once('value').then(function(snapshot) {
                 if (!snapshot.exists()) {
                     document.getElementById('authError').textContent = '用户不存在，请先注册';
@@ -544,7 +526,6 @@
                     return;
                 }
 
-                // 登录成功
                 currentUser = {
                     id: username,
                     name: username,
@@ -554,9 +535,6 @@
 
                 localStorage.setItem('telechat_user', JSON.stringify(currentUser));
                 enterChatRoom();
-            }).catch(function(error) {
-                document.getElementById('authError').textContent = '登录失败，请重试';
-                console.error(error);
             });
         }
 
@@ -579,14 +557,12 @@
             document.getElementById('authScreen').classList.remove('hidden');
         }
 
-        // ==================== 聊天室 ====================
         function enterChatRoom() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('myAvatarSm').style.background = currentUser.avatar;
             document.getElementById('myAvatarSm').textContent = currentUser.name[0].toUpperCase();
             document.getElementById('myNameSm').textContent = currentUser.name;
 
-            // 添加到在线用户
             userRef = usersRef.child(currentUser.id);
             userRef.set({
                 id: currentUser.id,
@@ -597,18 +573,15 @@
             });
             userRef.onDisconnect().remove();
 
-            // 发送加入消息
             messagesRef.push({
                 type: 'system',
                 text: '👋 ' + currentUser.name + ' 加入了聊天室',
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
 
-            // 加载消息
             loadLatestMessages();
             listenForNewMessages();
 
-            // 监听在线用户
             usersRef.on('value', function(snapshot) {
                 const users = snapshot.val() || {};
                 updateOnlineUsers(users);
@@ -779,7 +752,6 @@
             document.getElementById('onlinePanel').classList.toggle('hidden');
         }
 
-        // ==================== 工具函数 ====================
         function randomColor() {
             const colors = ['#e74c3c','#27ae60','#f39c12','#9b59b6','#3498db','#1abc9c','#e91e63','#00bcd4'];
             return colors[Math.floor(Math.random() * colors.length)];
@@ -798,8 +770,7 @@
             return div.innerHTML;
         }
 
-        // 初始化
         init();
     </script>
 </body>
-</html>
+                    </html>
